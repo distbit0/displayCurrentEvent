@@ -33,7 +33,7 @@ def display_popup(event_name, time_remaining):
         "--text",
         message,
         "--timeout",
-        "4",
+        getConfig()["popupTimeout"],
         "--no-wrap",
     ]
     subprocess.run(command)
