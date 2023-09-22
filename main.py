@@ -7,6 +7,7 @@ import datetime
 import subprocess
 from os import path
 import json
+import pytz
 
 
 def getConfig():
@@ -24,14 +25,15 @@ def getAbsPath(relPath):
     return fullPath
 
 
-def display_popup(event_name):
+def display_popup(event_name, time_remaining):
+    message = f"{event_name}\n{time_remaining} left"
     command = [
         "zenity",
         "--info",
         "--text",
-        event_name,
+        message,
         "--timeout",
-        "1",
+        "4",
         "--no-wrap",
     ]
     subprocess.run(command)
@@ -59,10 +61,24 @@ else:
 calendar = icalendar.Calendar.from_ical(ical_string)
 
 # Get events at current time
-now = datetime.datetime.now()
+local_tz = pytz.timezone(
+    "australia/sydney"
+)  # Replace with your timezone, e.g. 'America/New_York'
+now = datetime.datetime.now(local_tz)
 events = recurring_ical_events.of(calendar).at(now)
 
-# Display the event title in a popup
+# Display the event title and time remaining in a popup
 for event in events:
     title = event.get("SUMMARY", "Unknown Event")
-    display_popup(title)
+    end_time = event["DTEND"].dt
+    duration_seconds = int((end_time - now).total_seconds())
+
+    hours = duration_seconds // 3600
+    minutes = (duration_seconds % 3600) // 60
+
+    if hours > 0:
+        time_remaining = f"{hours}h {minutes}m"
+    else:
+        time_remaining = f"{minutes}m"
+
+    display_popup(title, time_remaining)
