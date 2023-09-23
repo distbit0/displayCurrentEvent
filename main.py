@@ -33,7 +33,7 @@ def display_popup(event_name, time_remaining):
         "--text",
         message,
         "--timeout",
-        getConfig()["popupTimeout"],
+        str(getConfig()["popupTimeout"]),
         "--no-wrap",
     ]
     subprocess.run(command)
@@ -44,7 +44,8 @@ CACHE_FILE = "calendar_cache.ics"
 URL = getConfig()["calendarUrl"]
 # Check if ical file is cached
 should_download = (
-    not os.path.exists(getAbsPath(CACHE_FILE)) or random.randint(1, 100) < 4
+    not os.path.exists(getAbsPath(CACHE_FILE))
+    or random.randint(1, 100) < getConfig()["cacheRefreshProbability"] * 100
 )
 
 
@@ -62,7 +63,7 @@ calendar = icalendar.Calendar.from_ical(ical_string)
 
 # Get events at current time
 local_tz = pytz.timezone(
-    "australia/sydney"
+    getConfig()["timezone"]
 )  # Replace with your timezone, e.g. 'America/New_York'
 now = datetime.datetime.now(local_tz)
 events = recurring_ical_events.of(calendar).at(now)
