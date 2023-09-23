@@ -8,6 +8,7 @@ import subprocess
 from os import path
 import json
 import pytz
+import pymsgbox
 
 
 def getConfig():
@@ -27,16 +28,7 @@ def getAbsPath(relPath):
 
 def display_popup(event_name, time_remaining):
     message = f"{event_name}\n{time_remaining} left"
-    command = [
-        "zenity",
-        "--info",
-        "--text",
-        message,
-        "--timeout",
-        str(getConfig()["popupTimeout"]),
-        "--no-wrap",
-    ]
-    subprocess.run(command)
+    pymsgbox.alert(message, "", timeout=getConfig()["popupTimeout"] * 1000)
 
 
 # Constants
