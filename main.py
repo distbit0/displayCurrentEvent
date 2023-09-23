@@ -8,8 +8,9 @@ import subprocess
 from os import path
 import json
 import pytz
-import cProfile
-import pstats
+
+# import cProfile
+# import pstats
 
 
 def getConfig():
@@ -88,11 +89,11 @@ def main():
 
 
 if __name__ == "__main__":
-    profiler = cProfile.Profile()
-    profiler.enable()
+    # profiler = cProfile.Profile()
+    # profiler.enable()
     main()
-    profiler.disable()
-    stats = pstats.Stats(profiler).sort_stats(
-        "cumulative"
-    )  # or 'time' to sort by time taken
-    stats.print_stats()
+    # profiler.disable()
+    # stats = pstats.Stats(profiler).sort_stats(
+    #     "cumulative"
+    # )  # or 'time' to sort by time taken
+    # stats.print_stats()
