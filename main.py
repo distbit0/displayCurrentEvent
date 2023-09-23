@@ -8,7 +8,8 @@ import subprocess
 from os import path
 import json
 import pytz
-import pymsgbox
+import tkinter as tk
+from tkinter import messagebox
 
 
 def getConfig():
@@ -27,8 +28,32 @@ def getAbsPath(relPath):
 
 
 def display_popup(event_name, time_remaining):
+    # Create root window
+    root = tk.Tk()
+    root.withdraw()  # Hide the root window
+
+    # Calculate the center coordinates
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    x_coordinate = (screen_width / 2) - (
+        200 / 2
+    )  # Assuming the message box is about 200px wide (this may need adjustment)
+    y_coordinate = (screen_height / 2) - (
+        100 / 2
+    )  # Assuming the message box is about 100px tall (this may need adjustment)
+
+    # Create and display the message box
     message = f"{event_name}\n{time_remaining} left"
-    pymsgbox.alert(message, "", timeout=getConfig()["popupTimeout"] * 1000)
+    messagebox.showinfo("", message, parent=root)
+
+    # Position the message box
+    root.geometry(f"+{int(x_coordinate)}+{int(y_coordinate)}")
+
+    # Set the timeout to destroy the popup after 4 seconds
+    root.after(getConfig()["popupTimeout"] * 1000, root.destroy)
+
+    # Run the main loop
+    root.mainloop()
 
 
 # Constants
