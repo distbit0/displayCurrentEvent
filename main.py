@@ -28,15 +28,14 @@ def getAbsPath(relPath):
     return fullPath
 
 
-def display_popup(event_name, time_remaining):
-    message = f"{event_name}\n{time_remaining} left"
+def display_popup(message, delay):
     command = [
         "zenity",
         "--info",
         "--text",
         message,
         "--timeout",
-        str(getConfig()["popupTimeout"]),
+        str(delay),
         "--no-wrap",
     ]
     subprocess.run(command)
@@ -71,6 +70,7 @@ def main():
     now = datetime.datetime.now(local_tz)
     events = recurring_ical_events.of(calendar).at(now)
 
+    messageText = []
     # Display the event title and time remaining in a popup
     for event in events:
         title = event.get("SUMMARY", "Unknown Event")
@@ -85,7 +85,12 @@ def main():
         else:
             time_remaining = f"{minutes}m"
 
-        display_popup(title, time_remaining)
+        message = f"{title}\n{time_remaining} left"
+        messageText.append(message)
+
+    delay = getConfig()["popupTimeout"] * len(messageText)
+    messageText = "\n\n".join(messageText)
+    display_popup(messageText, delay)
 
 
 if __name__ == "__main__":
