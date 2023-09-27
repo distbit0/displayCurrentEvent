@@ -26,19 +26,6 @@ def getAbsPath(relPath):
     return fullPath
 
 
-def display_popup(message, delay):
-    command = [
-        "zenity",
-        "--info",
-        "--text",
-        message,
-        "--timeout",
-        str(delay),
-        "--no-wrap",
-    ]
-    subprocess.run(command)
-
-
 def main():
     # Constants
     CACHE_FILE = "calendar_cache.ics"
@@ -83,13 +70,8 @@ def main():
         message = f"{title} {time_remaining} left"
         messageText.append(message)
 
-    if len(sys.argv) < 2:
-        messageText = "\n\n".join(messageText)
-        delay = getConfig()["popupTimeout"] * len(messageText)
-        display_popup(messageText, delay)
-    else:
-        messageText = "  ||  ".join(messageText)
-        print(messageText)
+    messageText = "  ||  ".join(messageText)
+    print(messageText)
 
 
 if __name__ == "__main__":
