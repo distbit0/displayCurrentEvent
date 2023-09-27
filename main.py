@@ -8,9 +8,7 @@ import subprocess
 from os import path
 import json
 import pytz
-
-# import cProfile
-# import pstats
+import sys
 
 
 def getConfig():
@@ -58,15 +56,12 @@ def main():
     else:
         with open(getAbsPath(CACHE_FILE), "rb") as f:
             ical_string = f.read()
-        print("opened from cache")
 
     # Load calendar
     calendar = icalendar.Calendar.from_ical(ical_string)
 
     # Get events at current time
-    local_tz = pytz.timezone(
-        getConfig()["timezone"]
-    )  # Replace with your timezone, e.g. 'America/New_York'
+    local_tz = pytz.timezone(getConfig()["timezone"])
     now = datetime.datetime.now(local_tz)
     events = recurring_ical_events.of(calendar).at(now)
 
@@ -85,20 +80,17 @@ def main():
         else:
             time_remaining = f"{minutes}m"
 
-        message = f"{title}\n{time_remaining} left"
+        message = f"{title} {time_remaining} left"
         messageText.append(message)
 
-    delay = getConfig()["popupTimeout"] * len(messageText)
-    messageText = "\n\n".join(messageText)
-    display_popup(messageText, delay)
+    if len(sys.argv) < 2:
+        messageText = "\n\n".join(messageText)
+        delay = getConfig()["popupTimeout"] * len(messageText)
+        display_popup(messageText, delay)
+    else:
+        messageText = "  ||  ".join(messageText)
+        print(messageText)
 
 
 if __name__ == "__main__":
-    # profiler = cProfile.Profile()
-    # profiler.enable()
     main()
-    # profiler.disable()
-    # stats = pstats.Stats(profiler).sort_stats(
-    #     "cumulative"
-    # )  # or 'time' to sort by time taken
-    # stats.print_stats()
