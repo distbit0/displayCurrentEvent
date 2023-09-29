@@ -55,22 +55,15 @@ def main():
     messageText = []
     # Display the event title and time remaining in a popup
     for event in events:
-        title = event.get("SUMMARY", "Unknown Event")
+        title = event.get("SUMMARY", "Unknown Event").upper()
         end_time = event["DTEND"].dt
         duration_seconds = int((end_time - now).total_seconds())
 
-        hours = duration_seconds // 3600
-        minutes = (duration_seconds % 3600) // 60
-
-        if hours > 0:
-            time_remaining = f"{hours}h {minutes}m"
-        else:
-            time_remaining = f"{minutes}m"
-
-        message = f"{title}           {time_remaining} left"
+        hours = duration_seconds / 3600
+        message = title + " " * 10 + str(round(hours, 1)) + " hrs"
         messageText.append(message)
 
-    messageText = "  ||  ".join(messageText).upper()
+    messageText = "  ||  ".join(messageText)
     print(messageText)
 
 
