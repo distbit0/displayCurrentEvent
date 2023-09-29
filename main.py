@@ -67,10 +67,10 @@ def main():
         else:
             time_remaining = f"{minutes}m"
 
-        message = f"{title} {time_remaining} left"
+        message = f"{title}           {time_remaining} left"
         messageText.append(message)
 
-    messageText = "  ||  ".join(messageText)
+    messageText = "  ||  ".join(messageText).upper()
     print(messageText)
 
 
