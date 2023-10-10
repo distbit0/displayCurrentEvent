@@ -13,8 +13,9 @@ import webbrowser
 import time
 
 
-def open_bookmarks(path_to_folder):
+def getTabsToOpen(path_to_folder):
     # Load the bookmarks file
+    tabsToOpen = []
     with open(getConfig()["bookmarksFilePath"], "r") as f:
         bookmarks = json.load(f)
 
@@ -26,7 +27,7 @@ def open_bookmarks(path_to_folder):
                 # We've found the folder, open all bookmarks in it
                 for child in node["children"]:
                     if "url" in child:
-                        webbrowser.open(child["url"])
+                        tabsToOpen.append(child["url"])
             else:
                 # Keep looking
                 if "children" in node:
@@ -35,6 +36,8 @@ def open_bookmarks(path_to_folder):
 
     # Start traversal from the root
     traverse(bookmarks["roots"]["bookmark_bar"], "")
+
+    return tabsToOpen
 
 
 def quitBraveBrowser():
@@ -60,10 +63,14 @@ def openBookmarksForNewEvents(title):
     pathToCurrentEventFile = getAbsPath("currentEvent.txt")
     if open(pathToCurrentEventFile).read() == title:
         return
-    quitBraveBrowser()
-    # time.sleep(0.5)
-    open_bookmarks("/Bookmarks bar/Open tabs/x" + title)
-    open(pathToCurrentEventFile, "w").write(title)
+
+    tabsToOpen = getTabsToOpen("/Bookmarks bar/Open tabs/x" + title)
+    if tabsToOpen:
+        quitBraveBrowser()
+        time.sleep(0.5)
+        for tab in tabsToOpen:
+            webbrowser.open_new_tab(tab)
+        open(pathToCurrentEventFile, "w").write(title)
 
 
 def main():
