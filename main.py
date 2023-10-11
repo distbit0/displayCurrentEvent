@@ -41,7 +41,7 @@ def getTabsToOpen(path_to_folder):
 
 
 def quitBraveBrowser():
-    subprocess.run(["killall", getConfig()["browerProcessName"]])
+    subprocess.run(["killall", getConfig()["browserProcessName"]])
 
 
 def getConfig():
@@ -59,6 +59,11 @@ def getAbsPath(relPath):
     return fullPath
 
 
+def executeBrowserStartupCommands():
+    for command in getConfig()["browserStartupCommands"]:
+        subprocess.Popen(command.split(" "))
+
+
 def openBookmarksForNewEvents(title):
     pathToCurrentEventFile = getAbsPath("currentEvent.txt")
     if open(pathToCurrentEventFile).read() == title:
@@ -67,7 +72,8 @@ def openBookmarksForNewEvents(title):
     tabsToOpen = getTabsToOpen("/Bookmarks bar/Open tabs/x" + title)
     if tabsToOpen:
         quitBraveBrowser()
-        time.sleep(0.5)
+        executeBrowserStartupCommands()
+        time.sleep(2)
         for tab in tabsToOpen:
             webbrowser.open_new_tab(tab)
         open(pathToCurrentEventFile, "w").write(title)
