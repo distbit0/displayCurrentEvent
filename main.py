@@ -16,6 +16,7 @@ import time
 def getTabsToOpen(path_to_folder):
     # Load the bookmarks file
     tabsToOpen = []
+    foundFolder = []
     with open(getConfig()["bookmarksFilePath"], "r") as f:
         bookmarks = json.load(f)
 
@@ -24,7 +25,7 @@ def getTabsToOpen(path_to_folder):
         if "name" in node:
             new_path = path + "/" + node["name"]
             if new_path.lower() == path_to_folder.lower():
-                # We've found the folder, open all bookmarks in it
+                foundFolder.append(True)
                 for child in node["children"]:
                     if "url" in child:
                         tabsToOpen.append(child["url"])
@@ -37,7 +38,10 @@ def getTabsToOpen(path_to_folder):
     # Start traversal from the root
     traverse(bookmarks["roots"]["bookmark_bar"], "")
 
-    return tabsToOpen
+    if foundFolder:
+        return tabsToOpen
+    else:
+        return None
 
 
 def quitBraveBrowser():
@@ -78,7 +82,7 @@ def openBookmarksForNewEvents(title):
         return
 
     tabsToOpen = getTabsToOpen("/Bookmarks bar/Open tabs/x" + title)
-    if tabsToOpen:
+    if tabsToOpen != None:
         quitBraveBrowser()
         executeBrowserStartupCommands()
         time.sleep(2)
