@@ -13,6 +13,18 @@ import webbrowser
 import time
 
 
+def sortObsidianToEnd(tabs):
+    obsidianTabs = [
+        obsidianTab
+        for obsidianTab in tabs
+        if "obsidian://open?vault" in obsidianTab.lower()
+    ]
+    for tab in obsidianTabs:
+        tabs.remove(tab)
+    tabs.extend(obsidianTabs)
+    return tabs
+
+
 def getTabsToOpen(path_to_folder):
     # Load the bookmarks file
     tabsToOpen = []
@@ -37,6 +49,8 @@ def getTabsToOpen(path_to_folder):
 
     # Start traversal from the root
     traverse(bookmarks["roots"]["bookmark_bar"], "")
+
+    tabsToOpen = sortObsidianToEnd(tabsToOpen)
 
     if foundFolder:
         return tabsToOpen
@@ -93,6 +107,7 @@ def openBookmarksForNewEvents(title):
                 stderr=subprocess.PIPE,
             )
         open(pathToCurrentEventFile, "w").write(title)
+        return
 
 
 def main():
