@@ -81,15 +81,6 @@ def getAbsPath(relPath):
     return fullPath
 
 
-def executeBrowserStartupCommands():
-    for command in getConfig()["browserStartupCommands"]:
-        subprocess.Popen(
-            command.split(" "),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-
-
 def openBookmarksForNewEvents(title):
     pathToCurrentEventFile = getAbsPath("currentEvent.txt")
     if open(pathToCurrentEventFile).read() == title:
@@ -98,14 +89,22 @@ def openBookmarksForNewEvents(title):
     tabsToOpen = getTabsToOpen("/Bookmarks bar/Open tabs/x" + title)
     if tabsToOpen != None:
         quitBraveBrowser()
-        executeBrowserStartupCommands()
         time.sleep(2)
         for tab in tabsToOpen:
-            subprocess.run(
-                [getConfig()["browserCommand"], tab],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
+            if tab.startswith("bash://"):
+                command = tab.replace("bash://", "")
+                command = "nohup " + command
+                subprocess.Popen(
+                    command.split(" "),
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+            else:
+                subprocess.run(
+                    ["nohup", getConfig()["browserCommand"], tab],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
         open(pathToCurrentEventFile, "w").write(title)
         return
 
@@ -150,3 +149,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # openBookmarksForNewEvents("increment")
