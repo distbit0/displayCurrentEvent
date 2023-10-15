@@ -4,6 +4,7 @@ import urllib.request
 import random
 import datetime
 import subprocess
+import os
 from os import path
 import json
 import pytz
@@ -57,8 +58,8 @@ def getTabsToOpen(path_to_folder):
 
 
 def quitBraveBrowser():
-    subprocess.Popen(
-        ["killall", getConfig()["browserProcessName"]],
+    subprocess.run(
+        ["killall", getConfig()["browserProcessName"], "&"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
@@ -90,19 +91,12 @@ def openBookmarksForNewEvents(title):
         time.sleep(2)
         for tab in tabsToOpen:
             if tab.startswith("bash://"):
-                command = tab.replace("bash://", "")
-                command = "nohup " + command
-                subprocess.Popen(
-                    command.split(" "),
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                )
+                command = (tab.replace("bash://", "")).split(" ")
             else:
-                subprocess.Popen(
-                    ["nohup", getConfig()["browserCommand"], tab],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                )
+                command = [getConfig()["browserCommand"], '"' + tab + '"']
+            if "obsidian://" in tab:
+                time.sleep(5)
+            os.system(" ".join(command) + " &")
         open(pathToCurrentEventFile, "w").write(title)
         return
 
