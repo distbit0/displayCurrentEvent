@@ -1,7 +1,6 @@
 import icalendar
 import recurring_ical_events
 import urllib.request
-import os
 import random
 import datetime
 import subprocess
@@ -9,7 +8,6 @@ from os import path
 import json
 import pytz
 import json
-import webbrowser
 import time
 
 
@@ -59,7 +57,7 @@ def getTabsToOpen(path_to_folder):
 
 
 def quitBraveBrowser():
-    subprocess.run(
+    subprocess.Popen(
         ["killall", getConfig()["browserProcessName"]],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -100,7 +98,7 @@ def openBookmarksForNewEvents(title):
                     stderr=subprocess.PIPE,
                 )
             else:
-                subprocess.run(
+                subprocess.Popen(
                     ["nohup", getConfig()["browserCommand"], tab],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -115,7 +113,7 @@ def main():
     URL = getConfig()["calendarUrl"]
     # Check if ical file is cached
     should_download = (
-        not os.path.exists(getAbsPath(CACHE_FILE))
+        not path.exists(getAbsPath(CACHE_FILE))
         or random.randint(1, 100) < getConfig()["cacheRefreshProbability"] * 100
     )
     if should_download:
