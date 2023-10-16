@@ -159,7 +159,7 @@ def getCurrentEvents():
     replacementEvent = open(getAbsPath("replacementEvent.txt")).read()
     if replacementEvent != "":
         eventName, endTime = replacementEvent.split("----")
-        endTime = int(endTime.split(".")[0])
+        endTime = float(endTime)
         if endTime > time.time():
             duration_seconds = endTime - time.time()
             return {eventName.upper(): duration_seconds}
@@ -199,13 +199,18 @@ def main():
     for event in finalEvents:
         title = event
         duration_seconds = finalEvents[event]
-        openBookmarksForNewEvents(title)
+        # openBookmarksForNewEvents(title)
         hours = duration_seconds / 3600
         message = title + " " * 15 + str(round(hours, 1))
         messageText.append(message)
 
-    messageText = "  ||  ".join(messageText)
-    print(messageText)
+    # determine if today is an odd or even day
+    todayIseven = datetime.datetime.today().weekday() % 2 == 0
+    goOnWalk = "WALK   " if todayIseven else ""
+
+    messageText = goOnWalk + "  ||  ".join(messageText)
+    with open(getAbsPath("displayText.txt"), "w") as f:
+        f.write(messageText)
 
 
 if __name__ == "__main__":
