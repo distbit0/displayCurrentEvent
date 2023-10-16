@@ -123,7 +123,7 @@ def getAbsPath(relPath):
 
 def openBookmarksForNewEvents(title):
     pathToCurrentEventFile = getAbsPath("currentEvent.txt")
-    if open(pathToCurrentEventFile).read() == title:
+    if open(pathToCurrentEventFile).read().lower() == title.lower():
         return
 
     tabsToOpen = getTabsToOpen(getConfig()["bookmarksFolderPath"] + "/x" + title)
@@ -165,7 +165,7 @@ def getCurrentEvents():
         endTime = int(endTime.split(".")[0])
         if endTime > time.time():
             duration_seconds = endTime - time.time()
-            return {eventName: duration_seconds}
+            return {eventName.upper(): duration_seconds}
 
     should_download = (
         not path.exists(getAbsPath(CACHE_FILE))
@@ -212,12 +212,10 @@ def main():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Disk usage analysis script")
+    parser = argparse.ArgumentParser(description="Calendar event manager")
     parser.add_argument("--setEvent", default="", type=str)
 
     args = parser.parse_args()
     if args.setEvent != "":
         setCurrentEvent(args.setEvent)
     main()
-    # setCurrentEvent("fringe")
-    # openBookmarksForNewEvents("increment")
