@@ -199,7 +199,7 @@ def main():
     for event in finalEvents:
         title = event
         duration_seconds = finalEvents[event]
-        # openBookmarksForNewEvents(title)
+        openBookmarksForNewEvents(title)
         hours = duration_seconds / 3600
         message = title + " " * 15 + str(round(hours, 1))
         messageText.append(message)

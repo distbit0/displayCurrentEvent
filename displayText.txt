@@ -1,1 +1,1 @@
-WALK                 ||  INCREMENT               0.6
+WALK                 ||  FRINGE               7.2
