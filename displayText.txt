@@ -1,1 +1,1 @@
-WALK                 ||  SLEEP               7.0
+NO WALK                 ||  REMEDIFY               0.3

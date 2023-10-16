@@ -93,6 +93,8 @@ def setCurrentEvent(eventFilter):
     latestEndTime = time.time() + getEndTimeOfLongestEvent()
     with open(getAbsPath("replacementEvent.txt"), "w") as f:
         f.write(eventName + "----" + str(latestEndTime))
+    with open(getAbsPath("currentEvent.txt"), "w") as f:
+        f.write("")
 
 
 def quitBraveBrowser():
