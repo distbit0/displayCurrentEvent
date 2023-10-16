@@ -1,1 +1,1 @@
-WALK           ||  INCREMENT               1.9
+WALK                 ||  INCREMENT               0.6
