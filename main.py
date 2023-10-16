@@ -206,9 +206,10 @@ def main():
 
     # determine if today is an odd or even day
     todayIseven = datetime.datetime.today().weekday() % 2 == 0
-    goOnWalk = "WALK   " if todayIseven else ""
+    if todayIseven:
+        messageText.insert(0, "WALK         ")
 
-    messageText = goOnWalk + "  ||  ".join(messageText)
+    messageText = "  ||  ".join(messageText)
     with open(getAbsPath("displayText.txt"), "w") as f:
         f.write(messageText)
 
