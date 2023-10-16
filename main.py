@@ -14,11 +14,8 @@ import argparse
 
 
 def sortObsidianToEnd(tabs):
-    obsidianTabs = [
-        obsidianTab
-        for obsidianTab in tabs
-        if "obsidian://open?vault" in obsidianTab.lower()
-    ]
+    notesAppUrlFilter = getConfig()["notesAppUrlFilter"]
+    obsidianTabs = [tab for tab in tabs if notesAppUrlFilter in tab.lower()]
     for tab in obsidianTabs:
         tabs.remove(tab)
     tabs.extend(obsidianTabs)
@@ -135,7 +132,7 @@ def openBookmarksForNewEvents(title):
                 command = (tab.replace("bash://", "")).split(" ")
             else:
                 command = [getConfig()["browserCommand"], '"' + tab + '"']
-            if "obsidian://" in tab:
+            if getConfig()["notesAppUrlFilter"] in tab:
                 time.sleep(5)
             os.system(" ".join(command) + " &")
         open(pathToCurrentEventFile, "w").write(title)
