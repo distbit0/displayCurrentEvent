@@ -97,7 +97,12 @@ def setCurrentEvent(eventFilter):
         f.write("")
 
 
-def quitBraveBrowser():
+def killProcesses():
+    processesToKill = getConfig()["processesToKill"]
+    for process in processesToKill:
+        subprocess.run(
+            ["killall", process, "&"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
     subprocess.run(
         ["killall", getConfig()["browserProcessName"], "&"],
         stdout=subprocess.PIPE,
@@ -127,7 +132,7 @@ def openBookmarksForNewEvents(title):
 
     tabsToOpen = getTabsToOpen(getConfig()["bookmarksFolderPath"] + "/x" + title)
     if tabsToOpen != None:
-        quitBraveBrowser()
+        killProcesses()
         time.sleep(2)
         for tab in tabsToOpen:
             if tab.startswith("bash://"):
