@@ -103,11 +103,6 @@ def killProcesses():
         subprocess.run(
             ["killall", process, "&"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-    subprocess.run(
-        ["killall", getConfig()["browserProcessName"], "&"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
 
 
 def getConfig():
