@@ -100,11 +100,7 @@ def setCurrentEvent(eventFilter):
 def killProcesses():
     processesToKill = getConfig()["processesToKill"]
     for process in processesToKill:
-        subprocess.run(
-            ["pkill", "-2", process, "&"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
+        os.system("pkill -2" + process + "&")
 
 
 def getConfig():
