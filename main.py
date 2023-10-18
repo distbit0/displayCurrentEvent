@@ -101,7 +101,9 @@ def killProcesses():
     processesToKill = getConfig()["processesToKill"]
     for process in processesToKill:
         subprocess.run(
-            ["killall", process, "&"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            ["pkill", "-2", process, "&"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
 
 
