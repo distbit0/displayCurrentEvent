@@ -100,7 +100,7 @@ def setCurrentEvent(eventFilter):
 def killProcesses():
     processesToKill = getConfig()["processesToKill"]
     for process in processesToKill:
-        os.system("pkill -2" + process + "&")
+        os.system("pkill --signal 2 " + process)
 
 
 def getConfig():
@@ -132,8 +132,9 @@ def openBookmarksForNewEvents(title):
                 command = (tab.replace("bash://", "")).split(" ")
             else:
                 command = [getConfig()["browserCommand"], '"' + tab + '"']
+                time.sleep(0.5)
             if getConfig()["notesAppUrlFilter"] in tab:
-                time.sleep(5)
+                time.sleep(2.5)
             os.system(" ".join(command) + " &")
         open(pathToCurrentEventFile, "w").write(title)
         return
