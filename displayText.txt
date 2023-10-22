@@ -1,1 +1,1 @@
-WALK                 ||  READ DEFI               1.8
+WALK                 ||  SLEEP               7.6
