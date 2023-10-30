@@ -1,1 +1,1 @@
-WALK                 ||  SLEEP               7.6
+WALK                 ||  DINNER               1.4  ||  MISCELLANEOUS               3.4
