@@ -126,7 +126,8 @@ def openBookmarksForNewEvents(title):
 
     tabsToOpen = getTabsToOpen(getConfig()["bookmarksFolderPath"] + "/x" + title)
     if tabsToOpen != None:
-        # killProcesses()
+        if getConfig()["closeWindows"]:
+            killProcesses()
         firstTab = True
         for tab in tabsToOpen:
             if tab.startswith("bash://"):
