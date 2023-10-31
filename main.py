@@ -101,7 +101,7 @@ def killProcesses():
     processesToKill = getConfig()["processesToKill"]
     for process in processesToKill:
         os.system("pkill --signal 2 " + process)
-    time.sleep(2)
+    time.sleep(1)
 
 
 def getConfig():
@@ -138,9 +138,9 @@ def openBookmarksForNewEvents(title):
                     isFirstTab = False
                 else:
                     command = [getConfig()["urlOpenCommand"], '"' + tab + '"']
-                time.sleep(0.1)
+                time.sleep(0.07)
             if getConfig()["notesAppUrlFilter"] in tab:
-                time.sleep(1)
+                time.sleep(0.5)
             os.system(" ".join(command) + " &")
         open(pathToCurrentEventFile, "w").write(title)
         return
