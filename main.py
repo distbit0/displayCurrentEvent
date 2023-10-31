@@ -126,16 +126,16 @@ def openBookmarksForNewEvents(title):
 
     tabsToOpen = getTabsToOpen(getConfig()["bookmarksFolderPath"] + "/x" + title)
     if tabsToOpen != None:
-        if getConfig()["closeWindows"]:
+        if getConfig()["killProcesses"]:
             killProcesses()
-        firstTab = True
+        isFirstTab = True
         for tab in tabsToOpen:
             if tab.startswith("bash://"):
                 command = (tab.replace("bash://", "")).split(" ")
             else:
-                if firstTab:
+                if isFirstTab:
                     command = [getConfig()["browserCommand"], '"' + tab + '"']
-                    firstTab = False
+                    isFirstTab = False
                 else:
                     command = [getConfig()["urlOpenCommand"], '"' + tab + '"']
                 time.sleep(0.1)
