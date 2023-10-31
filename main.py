@@ -84,15 +84,23 @@ def getEventNames(path_to_folder):
         return None
 
 
-def setCurrentEvent(eventFilter):
-    events = getEventNames(getConfig()["bookmarksFolderPath"])
-    for event in events:
-        if eventFilter.lower() in event.lower():
-            eventName = event
-            break
-    latestEndTime = time.time() + getEndTimeOfLongestEvent()
+def setCurrentEvent(eventFilter, eventLengthHours=""):
+    if eventFilter == "clear":
+        replacementEvent = ""
+    else:
+        events = getEventNames(getConfig()["bookmarksFolderPath"])
+        for event in events:
+            if eventFilter.lower() in event.lower():
+                eventName = event
+                break
+        if eventLengthHours == "":
+            latestEndTime = time.time() + getEndTimeOfLongestEvent()
+        else:
+            latestEndTime = time.time() + float(eventLengthHours) * 3600
+        replacementEvent = eventName + "----" + str(latestEndTime)
+
     with open(getAbsPath("replacementEvent.txt"), "w") as f:
-        f.write(eventName + "----" + str(latestEndTime))
+        f.write(replacementEvent)
     with open(getAbsPath("currentEvent.txt"), "w") as f:
         f.write("")
 
@@ -227,8 +235,12 @@ def main():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Calendar event manager")
     parser.add_argument("--setEvent", default="", type=str)
+    parser.add_argument("-l", default="", type=str)  ## length of event in hours
 
     args = parser.parse_args()
     if args.setEvent != "":
-        setCurrentEvent(args.setEvent)
+        if args.l != "":
+            setCurrentEvent(args.setEvent, args.l)
+        else:
+            setCurrentEvent(args.setEvent)
     main()
