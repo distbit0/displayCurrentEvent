@@ -153,7 +153,7 @@ def openBookmarksForNewEvents(title):
             if tab.startswith("bash://"):
                 command = (tab.replace("bash://", "")).split(" ")
             else:
-                if isFirstTab:
+                if isFirstTab and tab.startswith("http"):
                     command = [getConfig()["browserCommand"], '"' + tab + '"']
                     isFirstTab = False
                 else:
@@ -161,6 +161,7 @@ def openBookmarksForNewEvents(title):
                 time.sleep(0.07)
             if getConfig()["notesAppUrlFilter"] in tab:
                 time.sleep(0.5)
+            print(" ".join(command) + " &")
             os.system(" ".join(command) + " &")
         open(pathToCurrentEventFile, "w").write(title)
         return
