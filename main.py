@@ -106,16 +106,20 @@ def setCurrentEvent(eventFilter, eventLengthHours="", hoursUntilEvent=""):
             {"name": eventName, "start": eventStartTime, "end": latestEndTime}
         )
 
+    killProcesses(all=True)
     with open(getAbsPath("replacementEvent.txt"), "w") as f:
         f.write(replacementEvent)
-    if hoursUntilEvent == "":
+    if hoursUntilEvent == "" and eventFilter != "clear":
         with open(getAbsPath("currentEvent.txt"), "w") as f:
             f.write("")
 
 
-def killProcesses():
+def killProcesses(all=False):
     processesToKill = getConfig()["processesToKill"]
     for process in processesToKill:
+        if all:
+            process = process.replace("#", "")
+        print("pkill --signal 2 " + process)
         os.system("pkill --signal 2 " + process)
     time.sleep(1)
 

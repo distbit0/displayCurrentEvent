@@ -1,1 +1,1 @@
-NO WALK                 ||  LUNCH               0.1  ||  INCREMENT               2.1
+NO WALK                 ||  INCREMENT               2.0
