@@ -84,7 +84,7 @@ def getEventNames(path_to_folder):
         return None
 
 
-def setCurrentEvent(eventFilter, eventLengthHours=""):
+def setCurrentEvent(eventFilter, eventLengthHours="", hoursUntilEvent=""):
     if eventFilter == "clear":
         replacementEvent = ""
     else:
@@ -93,16 +93,24 @@ def setCurrentEvent(eventFilter, eventLengthHours=""):
             if eventFilter.lower() in event.lower():
                 eventName = event
                 break
+        if hoursUntilEvent == "":
+            eventStartTime = time.time()
+        else:
+            eventStartTime = time.time() + float(hoursUntilEvent) * 3600
         if eventLengthHours == "":
             latestEndTime = time.time() + getEndTimeOfLongestEvent()
         else:
-            latestEndTime = time.time() + float(eventLengthHours) * 3600
-        replacementEvent = eventName + "----" + str(latestEndTime)
+            latestEndTime = eventStartTime + float(eventLengthHours) * 3600
+
+        replacementEvent = json.dumps(
+            {"name": eventName, "start": eventStartTime, "end": latestEndTime}
+        )
 
     with open(getAbsPath("replacementEvent.txt"), "w") as f:
         f.write(replacementEvent)
-    with open(getAbsPath("currentEvent.txt"), "w") as f:
-        f.write("")
+    if hoursUntilEvent == "":
+        with open(getAbsPath("currentEvent.txt"), "w") as f:
+            f.write("")
 
 
 def killProcesses():
@@ -173,9 +181,15 @@ def getCurrentEvents():
 
     replacementEvent = open(getAbsPath("replacementEvent.txt")).read()
     if replacementEvent != "":
-        eventName, endTime = replacementEvent.split("----")
+        replacementEvent = json.loads(replacementEvent)
+        eventName, startTime, endTime = (
+            replacementEvent["name"],
+            replacementEvent["start"],
+            replacementEvent["end"],
+        )
         endTime = float(endTime)
-        if endTime > time.time():
+        startTime = float(startTime)
+        if endTime > time.time() and startTime < time.time():
             duration_seconds = endTime - time.time()
             return {eventName.upper(): duration_seconds}
 
@@ -236,11 +250,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Calendar event manager")
     parser.add_argument("--setEvent", default="", type=str)
     parser.add_argument("-l", default="", type=str)  ## length of event in hours
+    parser.add_argument("-s", default="", type=str)  # hours until start of event
 
     args = parser.parse_args()
     if args.setEvent != "":
         if args.l != "":
-            setCurrentEvent(args.setEvent, args.l)
+            setCurrentEvent(args.setEvent, args.l, args.s)
         else:
             setCurrentEvent(args.setEvent)
     main()
