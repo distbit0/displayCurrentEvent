@@ -165,7 +165,6 @@ def killProcesses(all=False):
     for process in processesToKill:
         if all:
             process = process.replace("#", "")
-        print("pkill --signal 2 " + process)
         os.system("pkill --signal 2 " + process)
 
     time.sleep(1)
@@ -204,7 +203,6 @@ def openBookmarksForNewEvents(title):
                 time.sleep(0.07)
             if getConfig()["notesAppUrlFilter"] in tab:
                 time.sleep(0.5)
-            print(" ".join(command) + " &")
             os.system(" ".join(command) + " &")
         return
 
