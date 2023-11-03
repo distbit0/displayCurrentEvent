@@ -104,7 +104,7 @@ def time_string_to_unix(time_string):
     return int(time.mktime(time_today.timetuple()))
 
 
-def replaceEvent(eventFilter, eventLengthHours="", eventStartTime=""):
+def replaceEvent(eventFilter, eventLengthHours="", eventStartTime="", onlyOpen=False):
     if eventFilter == "clear":
         replacementEvent = ""
     else:
@@ -113,6 +113,9 @@ def replaceEvent(eventFilter, eventLengthHours="", eventStartTime=""):
             if eventFilter.lower() in event.lower():
                 eventName = event
                 break
+        if onlyOpen:
+            openBookmarksForNewEvents(eventName)
+            return
         if eventStartTime == "":
             eventStartTime = time.time()
             killProcesses(all=True)
@@ -169,8 +172,6 @@ def getAbsPath(relPath):
 
 def openBookmarksForNewEvents(title):
     pathToCurrentEventFile = getAbsPath("currentEvent.txt")
-    if open(pathToCurrentEventFile).read().lower() == title.lower():
-        return
 
     tabsToOpen = getTabsToOpen(getConfig()["bookmarksFolderPath"] + "/x" + title)
     if tabsToOpen != None:
@@ -262,7 +263,8 @@ def main():
     for event in finalEvents:
         title = event
         duration_seconds = finalEvents[event]
-        openBookmarksForNewEvents(title)
+        if open(getAbsPath("currentEvent.txt")).read().lower() != title.lower():
+            openBookmarksForNewEvents(title)
         hours = duration_seconds / 3600
         message = title + " " * 15 + str(round(hours, 1))
         messageText.append(message)
@@ -287,6 +289,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "-s", default="", type=str
     )  # start time of event e.g. 14 = 2pm and 9 = 9am
+    parser.add_argument(
+        "-o", action="store_true"
+    )  # whether to just only open the tabs/windows rather than also saving the event
 
     args = parser.parse_args()
     if args.setEvent != "":
