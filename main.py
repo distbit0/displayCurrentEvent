@@ -122,16 +122,17 @@ def replaceEvent(eventFilter, eventLengthHours="", eventStartTime="", onlyOpen=F
         eventStartTime = (
             time.time() if eventStartTime == "" else timeStrToUnix(eventStartTime)
         )
-        activeEventEndTime = time.time() + durationOfLongestActiveEvent()
-        customEventEndTime = eventStartTime + float(eventLengthHours) * 3600
-        latestEndTime = (
-            activeEventEndTime if eventLengthHours == "" else customEventEndTime
+
+        eventEndTime = (
+            time.time() + durationOfLongestActiveEvent()
+            if eventLengthHours == ""
+            else eventStartTime + float(eventLengthHours) * 3600
         )
 
         replacementEvent = {
             "name": eventName,
             "start": eventStartTime,
-            "end": latestEndTime,
+            "end": eventEndTime,
         }
 
     if eventStartTime == "":
