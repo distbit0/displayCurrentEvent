@@ -276,7 +276,7 @@ def main():
         duration_seconds = currentEvents[event]
         if open(getAbsPath("currentEvent.txt")).read().lower() != title.lower():
             openBookmarksForNewEvents(title)
-            open(getAbsPath("currentEvent.txt", "w")).write(title)
+            open(getAbsPath("currentEvent.txt"), "w").write(title)
         hours = duration_seconds / 3600
         message = title + " " * 15 + str(round(hours, 1))
         messageText.append(message)
