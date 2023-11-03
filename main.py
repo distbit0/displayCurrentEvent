@@ -105,6 +105,9 @@ def time_string_to_unix(time_string):
 
 
 def replaceEvent(eventFilter, eventLengthHours="", eventStartTime="", onlyOpen=False):
+    replacementEvents = open(getAbsPath("replacementEvents.json")).read()
+    replacementEvents = json.loads(replacementEvents) if replacementEvents != "" else []
+
     if eventFilter == "clear":
         replacementEvent = ""
     else:
@@ -118,7 +121,6 @@ def replaceEvent(eventFilter, eventLengthHours="", eventStartTime="", onlyOpen=F
             return
         if eventStartTime == "":
             eventStartTime = time.time()
-            killProcesses(all=True)
         else:
             eventStartTime = time_string_to_unix(eventStartTime)
         if eventLengthHours == "":
@@ -132,16 +134,30 @@ def replaceEvent(eventFilter, eventLengthHours="", eventStartTime="", onlyOpen=F
             "end": latestEndTime,
         }
 
-    existingReplacementEvents = open(getAbsPath("replacementEvents.json")).read()
-    existingReplacementEvents = (
-        json.loads(existingReplacementEvents) if existingReplacementEvents != "" else []
-    )
-    existingReplacementEvents.append(replacementEvent)
-    with open(getAbsPath("replacementEvents.json"), "w") as f:
-        f.write(json.dumps(existingReplacementEvents))
-    if eventStartTime == "" and eventFilter != "clear":
+    if eventStartTime == "":
+        killProcesses(all=True)
         with open(getAbsPath("currentEvent.txt"), "w") as f:
             f.write("")
+
+    if eventFilter == "clear":
+        modifiedReplacementEvents = []
+        for event in replacementEvents:
+            eventName, startTime, endTime = (
+                event["name"],
+                event["start"],
+                event["end"],
+            )
+            endTime = float(endTime)
+            startTime = float(startTime)
+            isNotActive = endTime < time.time() or startTime > time.time()
+            if isNotActive:
+                modifiedReplacementEvents.append(event)
+        replacementEvents = list(modifiedReplacementEvents)
+
+    if replacementEvent != "":
+        replacementEvents.append(replacementEvent)
+    with open(getAbsPath("replacementEvents.json"), "w") as f:
+        f.write(json.dumps(replacementEvents))
 
 
 def killProcesses(all=False):
@@ -171,8 +187,6 @@ def getAbsPath(relPath):
 
 
 def openBookmarksForNewEvents(title):
-    pathToCurrentEventFile = getAbsPath("currentEvent.txt")
-
     tabsToOpen = getTabsToOpen(getConfig()["bookmarksFolderPath"] + "/x" + title)
     if tabsToOpen != None:
         if getConfig()["killProcesses"]:
@@ -192,7 +206,6 @@ def openBookmarksForNewEvents(title):
                 time.sleep(0.5)
             print(" ".join(command) + " &")
             os.system(" ".join(command) + " &")
-        open(pathToCurrentEventFile, "w").write(title)
         return
 
 
@@ -257,14 +270,15 @@ def getCurrentEvents():
 
 
 def main():
-    finalEvents = getCurrentEvents()
+    currentEvents = getCurrentEvents()
     messageText = []
     # Display the event title and time remaining in a popup
-    for event in finalEvents:
+    for event in currentEvents:
         title = event
-        duration_seconds = finalEvents[event]
+        duration_seconds = currentEvents[event]
         if open(getAbsPath("currentEvent.txt")).read().lower() != title.lower():
             openBookmarksForNewEvents(title)
+            open(getAbsPath("currentEvent.txt", "w")).write(title)
         hours = duration_seconds / 3600
         message = title + " " * 15 + str(round(hours, 1))
         messageText.append(message)
@@ -295,8 +309,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     if args.setEvent != "":
-        if args.l != "":
-            replaceEvent(args.setEvent, args.l, args.s)
-        else:
-            replaceEvent(args.setEvent)
+        replaceEvent(args.setEvent, args.l, args.s, args.o)
     main()
