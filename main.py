@@ -84,7 +84,27 @@ def getEventNames(path_to_folder):
         return None
 
 
-def setCurrentEvent(eventFilter, eventLengthHours="", hoursUntilEvent=""):
+def time_string_to_unix(time_string):
+    # Split the string on the decimal point to separate hours and minutes
+    if "." not in time_string:
+        time_string = time_string + ".0"
+    hours, minutes_fraction = map(float, time_string.split("."))
+    # Multiply the fractional part by 60 to get the minutes as an integer
+    minutes = int(minutes_fraction * 6)
+
+    # Get the current date
+    today = datetime.date.today()
+
+    # Create a datetime object for the specified time today
+    time_today = datetime.datetime(
+        today.year, today.month, today.day, int(hours), minutes
+    )
+
+    # Convert the datetime object to a Unix timestamp and return it
+    return int(time.mktime(time_today.timetuple()))
+
+
+def replaceEvent(eventFilter, eventLengthHours="", eventStartTime=""):
     if eventFilter == "clear":
         replacementEvent = ""
     else:
@@ -93,23 +113,30 @@ def setCurrentEvent(eventFilter, eventLengthHours="", hoursUntilEvent=""):
             if eventFilter.lower() in event.lower():
                 eventName = event
                 break
-        if hoursUntilEvent == "":
+        if eventStartTime == "":
             eventStartTime = time.time()
+            killProcesses(all=True)
         else:
-            eventStartTime = time.time() + float(hoursUntilEvent) * 3600
+            eventStartTime = time_string_to_unix(eventStartTime)
         if eventLengthHours == "":
             latestEndTime = time.time() + getEndTimeOfLongestEvent()
         else:
             latestEndTime = eventStartTime + float(eventLengthHours) * 3600
 
-        replacementEvent = json.dumps(
-            {"name": eventName, "start": eventStartTime, "end": latestEndTime}
-        )
+        replacementEvent = {
+            "name": eventName,
+            "start": eventStartTime,
+            "end": latestEndTime,
+        }
 
-    killProcesses(all=True)
-    with open(getAbsPath("replacementEvent.txt"), "w") as f:
-        f.write(replacementEvent)
-    if hoursUntilEvent == "" and eventFilter != "clear":
+    existingReplacementEvents = open(getAbsPath("replacementEvents.json")).read()
+    existingReplacementEvents = (
+        json.loads(existingReplacementEvents) if existingReplacementEvents != "" else []
+    )
+    existingReplacementEvents.append(replacementEvent)
+    with open(getAbsPath("replacementEvents.json"), "w") as f:
+        f.write(json.dumps(existingReplacementEvents))
+    if eventStartTime == "" and eventFilter != "clear":
         with open(getAbsPath("currentEvent.txt"), "w") as f:
             f.write("")
 
@@ -121,6 +148,7 @@ def killProcesses(all=False):
             process = process.replace("#", "")
         print("pkill --signal 2 " + process)
         os.system("pkill --signal 2 " + process)
+
     time.sleep(1)
 
 
@@ -184,9 +212,10 @@ def getCurrentEvents():
     URL = getConfig()["calendarUrl"]
     # Check if ical file is cached
 
-    replacementEvent = open(getAbsPath("replacementEvent.txt")).read()
-    if replacementEvent != "":
-        replacementEvent = json.loads(replacementEvent)
+    replacementEvents = open(getAbsPath("replacementEvents.json")).read()
+    replacementEvents = json.loads(replacementEvents) if replacementEvents != "" else []
+    replacementEvents.reverse()
+    for replacementEvent in replacementEvents:
         eventName, startTime, endTime = (
             replacementEvent["name"],
             replacementEvent["start"],
@@ -255,12 +284,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Calendar event manager")
     parser.add_argument("--setEvent", default="", type=str)
     parser.add_argument("-l", default="", type=str)  ## length of event in hours
-    parser.add_argument("-s", default="", type=str)  # hours until start of event
+    parser.add_argument(
+        "-s", default="", type=str
+    )  # start time of event e.g. 14 = 2pm and 9 = 9am
 
     args = parser.parse_args()
     if args.setEvent != "":
         if args.l != "":
-            setCurrentEvent(args.setEvent, args.l, args.s)
+            replaceEvent(args.setEvent, args.l, args.s)
         else:
-            setCurrentEvent(args.setEvent)
+            replaceEvent(args.setEvent)
     main()
