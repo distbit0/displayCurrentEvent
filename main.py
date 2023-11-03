@@ -275,9 +275,7 @@ def main():
     for event in currentEvents:
         title = event
         duration_seconds = currentEvents[event]
-        print(open(getAbsPath("currentEvent.txt")).read().lower(), title.lower())
         if open(getAbsPath("currentEvent.txt")).read().lower() != title.lower():
-            print("opening bookmarks for", title)
             if openBookmarksForNewEvents(title):
                 open(getAbsPath("currentEvent.txt"), "w").write(title)
         hours = duration_seconds / 3600

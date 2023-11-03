@@ -1,1 +1,1 @@
-WALK                 ||  DINNER               1.2  ||  MISCELLANEOUS               3.2
+WALK                 ||  DINNER               1.0  ||  MISCELLANEOUS               3.0
