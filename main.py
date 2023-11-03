@@ -204,7 +204,8 @@ def openBookmarksForNewEvents(title):
             if getConfig()["notesAppUrlFilter"] in tab:
                 time.sleep(0.5)
             os.system(" ".join(command) + " &")
-        return
+        return True
+    return False
 
 
 def getEndTimeOfLongestEvent():
@@ -274,9 +275,11 @@ def main():
     for event in currentEvents:
         title = event
         duration_seconds = currentEvents[event]
+        print(open(getAbsPath("currentEvent.txt")).read().lower(), title.lower())
         if open(getAbsPath("currentEvent.txt")).read().lower() != title.lower():
-            openBookmarksForNewEvents(title)
-            open(getAbsPath("currentEvent.txt"), "w").write(title)
+            print("opening bookmarks for", title)
+            if openBookmarksForNewEvents(title):
+                open(getAbsPath("currentEvent.txt"), "w").write(title)
         hours = duration_seconds / 3600
         message = title + " " * 15 + str(round(hours, 1))
         messageText.append(message)
