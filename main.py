@@ -84,7 +84,7 @@ def getEventNames(path_to_folder):
         return None
 
 
-def time_string_to_unix(time_string):
+def timeStrToUnix(time_string):
     # Split the string on the decimal point to separate hours and minutes
     if "." not in time_string:
         time_string = time_string + ".0"
@@ -107,26 +107,26 @@ def time_string_to_unix(time_string):
 def replaceEvent(eventFilter, eventLengthHours="", eventStartTime="", onlyOpen=False):
     replacementEvents = open(getAbsPath("replacementEvents.json")).read()
     replacementEvents = json.loads(replacementEvents) if replacementEvents != "" else []
+    events = getEventNames(getConfig()["bookmarksFolderPath"])
+    for event in events:
+        if eventFilter.lower() in event.lower():
+            eventName = event
+            break
 
     if eventFilter == "clear":
         replacementEvent = ""
+    elif onlyOpen:
+        openBookmarksForNewEvents(eventName)
+        return
     else:
-        events = getEventNames(getConfig()["bookmarksFolderPath"])
-        for event in events:
-            if eventFilter.lower() in event.lower():
-                eventName = event
-                break
-        if onlyOpen:
-            openBookmarksForNewEvents(eventName)
-            return
-        if eventStartTime == "":
-            eventStartTime = time.time()
-        else:
-            eventStartTime = time_string_to_unix(eventStartTime)
-        if eventLengthHours == "":
-            latestEndTime = time.time() + getEndTimeOfLongestEvent()
-        else:
-            latestEndTime = eventStartTime + float(eventLengthHours) * 3600
+        eventStartTime = (
+            time.time() if eventStartTime == "" else timeStrToUnix(eventStartTime)
+        )
+        activeEventEndTime = time.time() + durationOfLongestActiveEvent()
+        customEventEndTime = eventStartTime + float(eventLengthHours) * 3600
+        latestEndTime = (
+            activeEventEndTime if eventLengthHours == "" else customEventEndTime
+        )
 
         replacementEvent = {
             "name": eventName,
@@ -208,7 +208,7 @@ def openBookmarksForNewEvents(title):
     return False
 
 
-def getEndTimeOfLongestEvent():
+def durationOfLongestActiveEvent():
     events = getCurrentEvents()
     longestDuration = 0
     for event in events:
