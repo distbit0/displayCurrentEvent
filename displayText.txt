@@ -1,1 +1,1 @@
-WALK                 ||  DINNER               0.8  ||  MISCELLANEOUS               2.8
+NO WALK                 ||  INCREMENT               3.8

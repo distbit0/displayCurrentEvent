@@ -3,7 +3,6 @@ import recurring_ical_events
 import urllib.request
 import random
 import datetime
-import subprocess
 import os
 from os import path
 import json
@@ -229,17 +228,10 @@ def getCurrentEvents():
     replacementEvents = open(getAbsPath("replacementEvents.json")).read()
     replacementEvents = json.loads(replacementEvents) if replacementEvents != "" else []
     replacementEvents.reverse()
-    for replacementEvent in replacementEvents:
-        eventName, startTime, endTime = (
-            replacementEvent["name"],
-            replacementEvent["start"],
-            replacementEvent["end"],
-        )
-        endTime = float(endTime)
-        startTime = float(startTime)
-        if endTime > time.time() and startTime < time.time():
-            duration_seconds = endTime - time.time()
-            return {eventName.upper(): duration_seconds}
+    for event in replacementEvents:
+        if float(event["end"]) > time.time() and float(event["start"]) < time.time():
+            duration_seconds = float(event["end"]) - time.time()
+            return {event["name"].upper(): duration_seconds}
 
     should_download = (
         not path.exists(getAbsPath(CACHE_FILE))
