@@ -9,8 +9,6 @@ import json
 import time
 import argparse
 import urllib.parse
-from datetime import datetime
-import glob
 from dateutil.tz import tzlocal
 import subprocess
 
@@ -134,6 +132,7 @@ def timeStrToUnix(time_string):
 
 
 def findEventName(eventNameSubstring):
+    eventName = ""
     events = getEventNames(getConfig()["bookmarksFolderPath"])
     for event in events:
         if eventNameSubstring.lower() in event.lower():
@@ -170,7 +169,7 @@ def replaceEvent(eventFilter, eventLengthHours="", eventStartTime="", onlyOpen=F
         }
 
     if eventStartTime == "":
-        killProcesses(all=True)
+        # killProcesses(all=True)
         with open(getAbsPath("currentEvent.txt"), "w") as f:
             f.write("")
 
@@ -310,7 +309,7 @@ def getCurrentEvents():
     # Get events at current time
     ## get name of my current timezone
 
-    local_tz = datetime.now(tzlocal()).tzinfo
+    local_tz = datetime.datetime.now(tzlocal()).tzinfo
     now = datetime.datetime.now(local_tz)
     events = recurring_ical_events.of(calendar).at(now)
     finalEvents = {}
@@ -338,7 +337,7 @@ def main():
         messageText.append(message)
 
     # determine if today is an odd or even day
-    todayIseven = datetime.today().weekday() % 2 == 0
+    todayIseven = datetime.datetime.today().weekday() % 2 == 0
     spaceString = " " * 15
     if todayIseven:
         messageText.insert(0, "WALK" + spaceString)

@@ -1,1 +1,1 @@
-WALK                 ||  FRINGE               0.4
+WALK                 ||  CHAINSEC               0.1
