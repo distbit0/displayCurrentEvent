@@ -4,12 +4,42 @@ import urllib.request
 import random
 import datetime
 import os
-from os import path
 import json
-import pytz
 import json
 import time
 import argparse
+import urllib.parse
+from datetime import datetime
+import glob
+from dateutil.tz import tzlocal
+import subprocess
+
+
+def getObsidianUri(file_path, vault_root, vault_name):
+    # Validate input paths
+    print(file_path)
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError(
+            "The file path provided does not exist or is not a file."
+        )
+    if not os.path.isdir(vault_root):
+        raise NotADirectoryError("The vault root provided is not a directory.")
+
+    # Ensure the file path is relative to the vault root
+    relative_path = os.path.relpath(file_path, vault_root)
+
+    # Replace backslashes with forward slashes for URI compatibility
+    relative_path = relative_path.replace(os.sep, "/")
+
+    # Encode the filepath and vault name components of the URI
+    encoded_vault_name = urllib.parse.quote(vault_name)
+    encoded_file_path = urllib.parse.quote(relative_path)
+
+    # Construct the Obsidian Advanced URI with the provided vault name
+    # and an 'openmode' parameter set to 'tab'
+    uri = f"obsidian://advanced-uri?vault={encoded_vault_name}&filepath={encoded_file_path}&openmode=tab"
+
+    return uri
 
 
 def sortObsidianToEnd(tabs):
@@ -103,14 +133,19 @@ def timeStrToUnix(time_string):
     return int(time.mktime(time_today.timetuple()))
 
 
+def findEventName(eventNameSubstring):
+    events = getEventNames(getConfig()["bookmarksFolderPath"])
+    for event in events:
+        if eventNameSubstring.lower() in event.lower():
+            eventName = event
+            break
+    return eventName
+
+
 def replaceEvent(eventFilter, eventLengthHours="", eventStartTime="", onlyOpen=False):
     replacementEvents = open(getAbsPath("replacementEvents.json")).read()
     replacementEvents = json.loads(replacementEvents) if replacementEvents != "" else []
-    events = getEventNames(getConfig()["bookmarksFolderPath"])
-    for event in events:
-        if eventFilter.lower() in event.lower():
-            eventName = event
-            break
+    eventName = findEventName(eventFilter)
 
     if eventFilter == "clear":
         replacementEvent = ""
@@ -179,14 +214,39 @@ def getConfig():
 
 
 def getAbsPath(relPath):
-    basepath = path.dirname(__file__)
-    fullPath = path.abspath(path.join(basepath, relPath))
+    basepath = os.path.dirname(__file__)
+    fullPath = os.path.abspath(os.path.join(basepath, relPath))
 
     return fullPath
 
 
+def getObsidenFilesToOpen(eventTitle):
+    obsidianFilesToOpen = []
+    obsidianVaultPath = getConfig()["obsidianVaultPath"]
+    obsidianVaultName = getConfig()["obsidianVaultName"]
+    compactEventTitle = "#" + eventTitle.lower().replace(" ", "")
+
+    # Use the 'find' command to search for files containing the compact event title
+    command = f"find {obsidianVaultPath} -type f -not -path '*/\\.*' -exec grep -l '{compactEventTitle}' {{}} \\;"
+    output = subprocess.check_output(command, shell=True).decode()
+
+    # Split the output by newline to get the file paths
+    file_paths = output.strip().split("\n")
+    for file_path in file_paths:
+        if file_path == "":
+            continue
+        obsidianFilesToOpen.append(
+            getObsidianUri(file_path, obsidianVaultPath, obsidianVaultName)
+        )
+
+    return obsidianFilesToOpen
+
+
 def openBookmarksForNewEvents(title):
     tabsToOpen = getTabsToOpen(getConfig()["bookmarksFolderPath"] + "/x" + title)
+    obsidianUris = getObsidenFilesToOpen(title)
+    tabsToOpen.extend(obsidianUris)
+    print(tabsToOpen)
     if tabsToOpen != None:
         if getConfig()["killProcesses"]:
             killProcesses()
@@ -234,7 +294,7 @@ def getCurrentEvents():
             return {event["name"].upper(): duration_seconds}
 
     should_download = (
-        not path.exists(getAbsPath(CACHE_FILE))
+        not os.path.exists(getAbsPath(CACHE_FILE))
         or random.randint(1, 100) < getConfig()["cacheRefreshProbability"] * 100
     )
     if should_download:
@@ -248,7 +308,9 @@ def getCurrentEvents():
     calendar = icalendar.Calendar.from_ical(ical_string)
 
     # Get events at current time
-    local_tz = pytz.timezone(getConfig()["timezone"])
+    ## get name of my current timezone
+
+    local_tz = datetime.now(tzlocal()).tzinfo
     now = datetime.datetime.now(local_tz)
     events = recurring_ical_events.of(calendar).at(now)
     finalEvents = {}
@@ -276,7 +338,7 @@ def main():
         messageText.append(message)
 
     # determine if today is an odd or even day
-    todayIseven = datetime.datetime.today().weekday() % 2 == 0
+    todayIseven = datetime.today().weekday() % 2 == 0
     spaceString = " " * 15
     if todayIseven:
         messageText.insert(0, "WALK" + spaceString)
