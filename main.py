@@ -13,9 +13,11 @@ from dateutil.tz import tzlocal
 import subprocess
 
 
-def getObsidianUri(file_path, vault_root, vault_name):
+def getObsidianUri(file_path, vault_root):
     # Validate input paths
     print(file_path)
+
+    vault_name = os.path.basename(vault_root)
     if not os.path.isfile(file_path):
         raise FileNotFoundError(
             "The file path provided does not exist or is not a file."
@@ -222,7 +224,6 @@ def getAbsPath(relPath):
 def getObsidenFilesToOpen(eventTitle):
     obsidianFilesToOpen = []
     obsidianVaultPath = getConfig()["obsidianVaultPath"]
-    obsidianVaultName = getConfig()["obsidianVaultName"]
     compactEventTitle = "#" + eventTitle.lower().replace(" ", "")
 
     # Use the 'find' command to search for files containing the compact event title
@@ -234,9 +235,7 @@ def getObsidenFilesToOpen(eventTitle):
     for file_path in file_paths:
         if file_path == "":
             continue
-        obsidianFilesToOpen.append(
-            getObsidianUri(file_path, obsidianVaultPath, obsidianVaultName)
-        )
+        obsidianFilesToOpen.append(getObsidianUri(file_path, obsidianVaultPath))
 
     return obsidianFilesToOpen
 

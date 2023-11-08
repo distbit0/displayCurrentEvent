@@ -1,1 +1,1 @@
-WALK                 ||  CHAINSEC               0.1
+WALK                 ||  CHAINSEC               3.0
