@@ -81,7 +81,7 @@ def getTabsToOpen(path_to_folder):
     if foundFolder:
         return tabsToOpen
     else:
-        return None
+        return []  # None
 
 
 def getEventNames(path_to_folder):
@@ -249,7 +249,7 @@ def openBookmarksForNewEvents(title):
     obsidianUris = getObsidenFilesToOpen(title)
     tabsToOpen.extend(obsidianUris)
     print(tabsToOpen)
-    if tabsToOpen != None:
+    if tabsToOpen != []:
         if getConfig()["killProcesses"]:
             killProcesses()
         isFirstTab = True
