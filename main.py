@@ -143,10 +143,17 @@ def findEventName(eventNameSubstring):
     return eventName
 
 
-def replaceEvent(eventFilter, eventLengthHours="", eventStartTime="", onlyOpen=False):
+def replaceEvent(
+    eventFilter, eventLengthHours="", eventStartTimeHours="", onlyOpen=False
+):
     replacementEvents = open(getAbsPath("replacementEvents.json")).read()
     replacementEvents = json.loads(replacementEvents) if replacementEvents != "" else []
     eventName = findEventName(eventFilter)
+
+    if eventStartTimeHours == "":
+        killProcesses(all=True)
+        with open(getAbsPath("currentEvent.txt"), "w") as f:
+            f.write("")
 
     if eventFilter == "clear":
         replacementEvent = ""
@@ -155,7 +162,9 @@ def replaceEvent(eventFilter, eventLengthHours="", eventStartTime="", onlyOpen=F
         return
     else:
         eventStartTime = (
-            time.time() if eventStartTime == "" else timeStrToUnix(eventStartTime)
+            time.time()
+            if eventStartTimeHours == ""
+            else timeStrToUnix(eventStartTimeHours)
         )
 
         eventEndTime = (
@@ -169,11 +178,6 @@ def replaceEvent(eventFilter, eventLengthHours="", eventStartTime="", onlyOpen=F
             "start": eventStartTime,
             "end": eventEndTime,
         }
-
-    if eventStartTime == "":
-        # killProcesses(all=True)
-        with open(getAbsPath("currentEvent.txt"), "w") as f:
-            f.write("")
 
     if eventFilter == "clear":
         modifiedReplacementEvents = []

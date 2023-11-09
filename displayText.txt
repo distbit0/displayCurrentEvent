@@ -1,1 +1,1 @@
-WALK                 ||  CHAINSEC               3.0
+NO WALK                 ||  INCREMENT               1.8
