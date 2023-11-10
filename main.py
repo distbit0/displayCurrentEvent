@@ -179,20 +179,20 @@ def replaceEvent(
             "end": eventEndTime,
         }
 
-    if eventFilter == "clear":
-        modifiedReplacementEvents = []
-        for event in replacementEvents:
-            eventName, startTime, endTime = (
-                event["name"],
-                event["start"],
-                event["end"],
-            )
-            endTime = float(endTime)
-            startTime = float(startTime)
-            isNotActive = endTime < time.time() or startTime > time.time()
-            if isNotActive:
-                modifiedReplacementEvents.append(event)
-        replacementEvents = list(modifiedReplacementEvents)
+    # if eventFilter == "clear":
+    #     modifiedReplacementEvents = []
+    #     for event in replacementEvents:
+    #         eventName, startTime, endTime = (
+    #             event["name"],
+    #             event["start"],
+    #             event["end"],
+    #         )
+    #         endTime = float(endTime)
+    #         startTime = float(startTime)
+    #         isNotActive = endTime < time.time() or startTime > time.time()
+    #         if isNotActive:
+    #             modifiedReplacementEvents.append(event)
+    #     replacementEvents = list(modifiedReplacementEvents)
 
     if replacementEvent != "":
         replacementEvents.append(replacementEvent)
