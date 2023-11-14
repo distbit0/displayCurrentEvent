@@ -204,9 +204,11 @@ def killProcesses(all=False):
     processesToKill = getConfig()["processesToKill"]
     for process in processesToKill:
         if all:
-            process = process.replace("#", "")
-        os.system("pkill --signal 2 " + process)
-
+            if process[0] == "#":
+                process = process[1:]
+            if "obsidian" in process.lower() and process[0] != "#":
+                deleteObsidianTabs()
+        os.system(process)
     time.sleep(1)
 
 
@@ -265,6 +267,8 @@ def openBookmarksForNewEvents(title):
                 time.sleep(0.07)
             if getConfig()["notesAppUrlFilter"] in tab:
                 time.sleep(0.5)
+                print("\n\n\About to execute command: " + " ".join(command) + "\n\n\n")
+
             os.system(" ".join(command) + " &")
         return True
     return False
@@ -279,6 +283,17 @@ def durationOfLongestActiveEvent():
             longestDuration = duration
 
     return longestDuration
+
+
+def deleteObsidianTabs():
+    obsidianWorkSpaceFile = (
+        getConfig()["obsidianVaultPath"] + "/.obsidian/workspace.json"
+    )
+    contents = json.load(open(obsidianWorkSpaceFile))
+    contents["main"] = {}
+    with open(obsidianWorkSpaceFile, "w") as f:
+        json.dump(contents, f)
+    time.sleep(0.25)
 
 
 def getCurrentEvents():
