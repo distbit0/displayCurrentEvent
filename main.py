@@ -267,7 +267,7 @@ def openBookmarksForNewEvents(title):
                 time.sleep(0.07)
             if getConfig()["notesAppUrlFilter"] in tab:
                 time.sleep(0.5)
-                print("\n\n\About to execute command: " + " ".join(command) + "\n\n\n")
+                print("\n\n\nAbout to execute command: " + " ".join(command) + "\n\n\n")
 
             os.system(" ".join(command) + " &")
         return True
