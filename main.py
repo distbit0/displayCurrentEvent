@@ -1,4 +1,5 @@
 import icalendar
+import urllib.parse
 import recurring_ical_events
 import urllib.request
 import random
@@ -246,6 +247,19 @@ def getObsidenFilesToOpen(eventTitle):
     return obsidianFilesToOpen
 
 
+def generateSleepTabUrl(url):
+    # Extract the domain or title from the URL for use in the title parameter
+    title = urllib.parse.urlparse(url).netloc
+
+    # Encode the URL
+    encoded_url = urllib.parse.quote(url)
+
+    # Construct the sleep tab URL with fixed sessionId and tabId
+    sleep_url = f"chrome-extension://fiabciakcmgepblmdkmemdbbkilneeeh/park.html?title={title}&url={encoded_url}&tabId=1572532155&sessionId=1700014174643"
+
+    return sleep_url
+
+
 def openBookmarksForNewEvents(title):
     tabsToOpen = getTabsToOpen(getConfig()["bookmarksFolderPath"] + "/x" + title)
     obsidianUris = getObsidenFilesToOpen(title)
@@ -258,16 +272,22 @@ def openBookmarksForNewEvents(title):
         for tab in tabsToOpen:
             if tab.startswith("bash://"):
                 command = (tab.replace("bash://", "")).split(" ")
-            else:
-                if isFirstTab and tab.startswith("http"):
-                    command = [getConfig()["browserCommand"], '"' + tab + '"']
+            elif tab.startswith("http"):
+                if getConfig()["lazyOpenTabs"]:
+                    tab = generateSleepTabUrl(tab)
+                if isFirstTab:
+                    command = [
+                        getConfig()["browserCommand"] + " --new-window",
+                        '"' + tab + '"',
+                    ]
                     isFirstTab = False
                 else:
-                    command = [getConfig()["urlOpenCommand"], '"' + tab + '"']
+                    command = [getConfig()["browserCommand"], '"' + tab + '"']
                 time.sleep(0.07)
-            if getConfig()["notesAppUrlFilter"] in tab:
+            elif getConfig()["notesAppUrlFilter"] in tab:
                 time.sleep(0.5)
                 print("\n\n\nAbout to execute command: " + " ".join(command) + "\n\n\n")
+                command = [getConfig()["urlOpenCommand"], '"' + tab + '"']
 
             os.system(" ".join(command) + " &")
         return True
@@ -340,7 +360,7 @@ def getCurrentEvents():
     return finalEvents
 
 
-def main():
+def main(setEventArg):
     currentEvents = getCurrentEvents()
     messageText = []
     # Display the event title and time remaining in a popup
@@ -348,7 +368,10 @@ def main():
         title = event
         duration_seconds = currentEvents[event]
         if open(getAbsPath("currentEvent.txt")).read().lower() != title.lower():
-            if openBookmarksForNewEvents(title):
+            if getConfig()["autoOpen"] or setEventArg:
+                if openBookmarksForNewEvents(title):
+                    open(getAbsPath("currentEvent.txt"), "w").write(title)
+            else:
                 open(getAbsPath("currentEvent.txt"), "w").write(title)
         hours = duration_seconds / 3600
         message = title + " " * 15 + str(round(hours, 1))
@@ -381,4 +404,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.setEvent != "":
         replaceEvent(args.setEvent, args.l, args.s, args.o)
-    main()
+    main(args.setEvent)
