@@ -1,1 +1,1 @@
-WALK                 ||  EXISTING NOTES               0.5
+WALK                 ||  FRINGE               0.5
