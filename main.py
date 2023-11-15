@@ -45,7 +45,7 @@ def getObsidianUri(file_path, vault_root):
 
 def sortObsidianToEnd(tabs):
     notesAppUrlFilter = getConfig()["notesAppUrlFilter"]
-    obsidianTabs = [tab for tab in tabs if notesAppUrlFilter in tab.lower()]
+    obsidianTabs = [tab for tab in tabs if notesAppUrlFilter in tab[0].lower()]
     for tab in obsidianTabs:
         tabs.remove(tab)
     tabs.extend(obsidianTabs)
@@ -67,7 +67,7 @@ def getTabsToOpen(path_to_folder):
                 foundFolder.append(True)
                 for child in node["children"]:
                     if "url" in child:
-                        tabsToOpen.append(child["url"])
+                        tabsToOpen.append([child["url"], child["name"]])
             else:
                 # Keep looking
                 if "children" in node:
@@ -242,20 +242,20 @@ def getObsidenFilesToOpen(eventTitle):
     for file_path in file_paths:
         if file_path == "":
             continue
-        obsidianFilesToOpen.append(getObsidianUri(file_path, obsidianVaultPath))
+        obsidianFilesToOpen.append([getObsidianUri(file_path, obsidianVaultPath), ""])
 
     return obsidianFilesToOpen
 
 
-def generateSleepTabUrl(url):
+def generateSleepTabUrl(url, title):
     # Extract the domain or title from the URL for use in the title parameter
-    title = urllib.parse.urlparse(url).netloc
 
     # Encode the URL
     encoded_url = urllib.parse.quote(url)
+    encoded_title = urllib.parse.quote(title)
 
     # Construct the sleep tab URL with fixed sessionId and tabId
-    sleep_url = f"chrome-extension://fiabciakcmgepblmdkmemdbbkilneeeh/park.html?title={title}&url={encoded_url}&tabId=1572591901&sessionId=1700014174643"
+    sleep_url = f"chrome-extension://fiabciakcmgepblmdkmemdbbkilneeeh/park.html?title={encoded_title}&url={encoded_url}&tabId=1572591901&sessionId=1700014174643"
 
     return sleep_url
 
@@ -266,28 +266,30 @@ def openBookmarksForNewEvents(title):
     tabsToOpen.extend(obsidianUris)
     print(tabsToOpen)
     if tabsToOpen != []:
-        if getConfig()["killProcesses"]:
+        if getConfig()["killUncommentedProcesses"]:
             killProcesses()
         isFirstTab = True
         for tab in tabsToOpen:
-            if tab.startswith("bash://"):
-                command = (tab.replace("bash://", "")).split(" ")
-            elif tab.startswith("http"):
+            tabUrl, tabTitle = tab
+            if tabUrl.startswith("bash://"):
+                command = (tabUrl.replace("bash://", "")).split(" ")
+            elif tabUrl.startswith("http"):
                 if getConfig()["lazyOpenTabs"]:
-                    tab = generateSleepTabUrl(tab)
+                    tabUrl = generateSleepTabUrl(tabUrl, tabTitle)
+                    print(tabUrl)
                 if isFirstTab:
                     command = [
                         getConfig()["browserCommand"] + " --new-window",
-                        '"' + tab + '"',
+                        '"' + tabUrl + '"',
                     ]
                     isFirstTab = False
                 else:
-                    command = [getConfig()["browserCommand"], '"' + tab + '"']
+                    command = [getConfig()["browserCommand"], '"' + tabUrl + '"']
                 time.sleep(0.07)
-            elif getConfig()["notesAppUrlFilter"] in tab:
+            elif getConfig()["notesAppUrlFilter"] in tabUrl:
                 time.sleep(0.5)
                 print("\n\n\nAbout to execute command: " + " ".join(command) + "\n\n\n")
-                command = [getConfig()["urlOpenCommand"], '"' + tab + '"']
+                command = [getConfig()["urlOpenCommand"], '"' + tabUrl + '"']
 
             os.system(" ".join(command) + " &")
         return True

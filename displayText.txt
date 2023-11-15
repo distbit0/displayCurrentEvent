@@ -1,1 +1,1 @@
-WALK                 ||  FRINGE               0.5
+NO WALK                 ||  MISC               0.8
