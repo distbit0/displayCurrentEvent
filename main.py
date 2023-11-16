@@ -301,7 +301,7 @@ def deleteObsidianTabs(obsidianNotesToOpen):
     contents["main"]["id"] = ""
     contents["main"]["children"] = []
     contents["active"] = ""
-    contents["lastOpenFiles"] = obsidianNotesToOpen  ###### CHECK THIS IS RIGHT FORMAT
+    contents["lastOpenFiles"][0] = obsidianNotesToOpen[0]
     with open(obsidianWorkSpaceFile, "w") as f:
         json.dump(contents, f)
 
