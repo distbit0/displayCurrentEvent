@@ -6,18 +6,14 @@ import random
 import datetime
 import os
 import json
-import json
 import time
 import argparse
-import urllib.parse
 from dateutil.tz import tzlocal
 import subprocess
 
 
 def getObsidianUri(file_path, vault_root):
     # Validate input paths
-    print(file_path)
-
     vault_name = os.path.basename(vault_root)
     if not os.path.isfile(file_path):
         raise FileNotFoundError(
@@ -152,7 +148,7 @@ def replaceEvent(
     eventName = findEventName(eventFilter)
 
     if eventStartTimeHours == "":
-        killProcesses(all=True)
+        # killProcesses(all=True)
         with open(getAbsPath("currentEvent.txt"), "w") as f:
             f.write("")
 
@@ -180,37 +176,22 @@ def replaceEvent(
             "end": eventEndTime,
         }
 
-    # if eventFilter == "clear":
-    #     modifiedReplacementEvents = []
-    #     for event in replacementEvents:
-    #         eventName, startTime, endTime = (
-    #             event["name"],
-    #             event["start"],
-    #             event["end"],
-    #         )
-    #         endTime = float(endTime)
-    #         startTime = float(startTime)
-    #         isNotActive = endTime < time.time() or startTime > time.time()
-    #         if isNotActive:
-    #             modifiedReplacementEvents.append(event)
-    #     replacementEvents = list(modifiedReplacementEvents)
-
     if replacementEvent != "":
         replacementEvents.append(replacementEvent)
     with open(getAbsPath("replacementEvents.json"), "w") as f:
         f.write(json.dumps(replacementEvents))
 
 
-def killProcesses(all=False):
+def killProcesses(all=False, obsidianNotesToOpen=[]):
     processesToKill = getConfig()["processesToKill"]
     for process in processesToKill:
         if all:
             if process[0] == "#":
                 process = process[1:]
-            if "obsidian" in process.lower() and process[0] != "#":
-                deleteObsidianTabs()
+        if "obsidian" in process.lower() and process[0] != "#":
+            deleteObsidianTabs(obsidianNotesToOpen)
         os.system(process)
-    time.sleep(1)
+    time.sleep(2)
 
 
 def getConfig():
@@ -230,6 +211,7 @@ def getAbsPath(relPath):
 
 def getObsidenFilesToOpen(eventTitle):
     obsidianFilesToOpen = []
+    obsidianNotePaths = []
     obsidianVaultPath = getConfig()["obsidianVaultPath"]
     compactEventTitle = "#" + eventTitle.lower().replace(" ", "")
 
@@ -242,9 +224,10 @@ def getObsidenFilesToOpen(eventTitle):
     for file_path in file_paths:
         if file_path == "":
             continue
+        pathRelativeToVault = os.path.relpath(file_path, obsidianVaultPath)
         obsidianFilesToOpen.append([getObsidianUri(file_path, obsidianVaultPath), ""])
-
-    return obsidianFilesToOpen
+        obsidianNotePaths.append(pathRelativeToVault)
+    return obsidianFilesToOpen, obsidianNotePaths
 
 
 def generateSleepTabUrl(url, title):
@@ -260,14 +243,18 @@ def generateSleepTabUrl(url, title):
     return sleep_url
 
 
-def openBookmarksForNewEvents(title):
+def openBookmarksForNewEvents(title, setEventArg):
     tabsToOpen = getTabsToOpen(getConfig()["bookmarksFolderPath"] + "/x" + title)
-    obsidianUris = getObsidenFilesToOpen(title)
+    obsidianUris, obsidianNotePaths = getObsidenFilesToOpen(title)
+
+    killCommentedProcesses = True if setEventArg else False
     tabsToOpen.extend(obsidianUris)
-    print(tabsToOpen)
     if tabsToOpen != []:
         if getConfig()["killUncommentedProcesses"]:
-            killProcesses()
+            if killCommentedProcesses:
+                killProcesses(all=True, obsidianNotesToOpen=obsidianNotePaths)
+            else:
+                killProcesses(all=False, obsidianNotesToOpen=obsidianNotePaths)
         isFirstTab = True
         for tab in tabsToOpen:
             tabUrl, tabTitle = tab
@@ -276,7 +263,6 @@ def openBookmarksForNewEvents(title):
             elif tabUrl.startswith("http"):
                 if getConfig()["lazyOpenTabs"]:
                     tabUrl = generateSleepTabUrl(tabUrl, tabTitle)
-                    print(tabUrl)
                 if isFirstTab:
                     command = [
                         getConfig()["browserCommand"] + " --new-window",
@@ -307,15 +293,17 @@ def durationOfLongestActiveEvent():
     return longestDuration
 
 
-def deleteObsidianTabs():
+def deleteObsidianTabs(obsidianNotesToOpen):
     obsidianWorkSpaceFile = (
         getConfig()["obsidianVaultPath"] + "/.obsidian/workspace.json"
     )
     contents = json.load(open(obsidianWorkSpaceFile))
-    contents["main"] = {}
+    contents["main"]["id"] = ""
+    contents["main"]["children"] = []
+    contents["active"] = ""
+    contents["lastOpenFiles"] = obsidianNotesToOpen  ###### CHECK THIS IS RIGHT FORMAT
     with open(obsidianWorkSpaceFile, "w") as f:
         json.dump(contents, f)
-    time.sleep(0.25)
 
 
 def getCurrentEvents():
@@ -371,7 +359,7 @@ def main(setEventArg):
         duration_seconds = currentEvents[event]
         if open(getAbsPath("currentEvent.txt")).read().lower() != title.lower():
             if getConfig()["autoOpen"] or setEventArg:
-                if openBookmarksForNewEvents(title):
+                if openBookmarksForNewEvents(title, setEventArg):
                     open(getAbsPath("currentEvent.txt"), "w").write(title)
             else:
                 open(getAbsPath("currentEvent.txt"), "w").write(title)
