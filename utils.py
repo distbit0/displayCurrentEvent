@@ -54,3 +54,11 @@ def getEventNames(path_to_folder):
         return subfolderNames
     else:
         return None
+
+
+def getVsCodePathsForEvent(eventName):
+    with open(getAbsPath("./vsCodeEventPaths.json"), "r") as file:
+        directoryMap = json.load(file)
+    if eventName not in directoryMap:
+        return []
+    return directoryMap[eventName]

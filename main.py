@@ -10,6 +10,7 @@ import time
 import argparse
 from dateutil.tz import tzlocal
 import subprocess
+import utils
 from utils import getAbsPath, getConfig, findEventName
 
 
@@ -190,12 +191,22 @@ def generateSleepTabUrl(url, title):
     return sleep_url
 
 
+def getVsCodeCommandUris(eventName):
+    commands = []
+    paths = utils.getVsCodePathsForEvent(eventName)
+    for path in paths:
+        command = "bash://code " + path
+        commands.append(command)
+    return commands
+
+
 def openBookmarksForNewEvents(title, setEventArg):
     tabsToOpen = getTabsToOpen(getConfig()["bookmarksFolderPath"] + "/x" + title)
     obsidianUris, obsidianNotePaths = getObsidenFilesToOpen(title)
-
+    vsCodeCommandUris = getVsCodeCommandUris(title)
     killCommentedProcesses = True if setEventArg else False
     tabsToOpen.extend(obsidianUris)
+    tabsToOpen.extend(vsCodeCommandUris)
     if tabsToOpen != []:
         if getConfig()["killUncommentedProcesses"]:
             if killCommentedProcesses:

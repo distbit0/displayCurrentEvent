@@ -4,8 +4,8 @@ import sys
 from utils import getAbsPath, findEventName
 
 
-def manageEventPaths(eventName, directoryMapFilePath):
-    currentPath = os.getcwd()
+def manageEventPaths(eventName, currentPath):
+    directoryMapFilePath = getAbsPath("./vsCodeEventPaths.json")
     if not os.path.exists(directoryMapFilePath):
         with open(directoryMapFilePath, "w") as file:
             json.dump({}, file)
@@ -28,12 +28,21 @@ def manageEventPaths(eventName, directoryMapFilePath):
         json.dump(directoryMap, file, indent=4)
 
 
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python script.py <project_name>")
-        sys.exit(1)
+def getEventsForPath(currentDir):
+    events = []
+    with open(getAbsPath("./vsCodeEventPaths.json"), "r") as file:
+        directoryMap = json.load(file)
+    for event in directoryMap:
+        if currentDir in directoryMap[event]:
+            events.append(event)
+    return events
 
-    eventSubString = sys.argv[1]
-    eventName = findEventName(eventSubString)
-    directoryMapFilePath = getAbsPath("./vsCodeEventPaths.json")
-    manageEventPaths(eventName, directoryMapFilePath)
+
+if __name__ == "__main__":
+    currentPath = os.getcwd()
+    if len(sys.argv) == 1:
+        print("\n".join(getEventsForPath(currentPath)))
+    elif len(sys.argv) == 2:
+        eventSubString = sys.argv[1]
+        eventName = findEventName(eventSubString)
+        manageEventPaths(eventName, currentPath)
