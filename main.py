@@ -10,6 +10,7 @@ import time
 import argparse
 from dateutil.tz import tzlocal
 import subprocess
+from utils import getAbsPath, getConfig, findEventName
 
 
 def getObsidianUri(file_path, vault_root):
@@ -81,35 +82,6 @@ def getTabsToOpen(path_to_folder):
         return []  # None
 
 
-def getEventNames(path_to_folder):
-    subfolderNames = []
-    foundFolder = []
-
-    # Load bookmarks from the specified path in the config
-    with open(getConfig()["bookmarksFilePath"], "r") as f:
-        bookmarks = json.load(f)
-
-    def traverse(node, path):
-        if "name" in node:
-            new_path = path + "/" + node["name"]
-            if new_path.lower() == path_to_folder.lower():
-                foundFolder.append(True)
-                for child in node.get("children", []):
-                    if "children" in child:
-                        subfolderNames.append(child["name"][1:])
-            else:
-                if "children" in node:
-                    for child in node["children"]:
-                        traverse(child, new_path)
-
-    traverse(bookmarks["roots"]["bookmark_bar"], "")
-
-    if foundFolder:
-        return subfolderNames
-    else:
-        return None
-
-
 def timeStrToUnix(time_string):
     # Split the string on the decimal point to separate hours and minutes
     if "." not in time_string:
@@ -128,16 +100,6 @@ def timeStrToUnix(time_string):
 
     # Convert the datetime object to a Unix timestamp and return it
     return int(time.mktime(time_today.timetuple()))
-
-
-def findEventName(eventNameSubstring):
-    eventName = ""
-    events = getEventNames(getConfig()["bookmarksFolderPath"])
-    for event in events:
-        if eventNameSubstring.lower() in event.lower():
-            eventName = event
-            break
-    return eventName
 
 
 def replaceEvent(
@@ -192,21 +154,6 @@ def killProcesses(all=False, obsidianNotesToOpen=[]):
             deleteObsidianTabs(obsidianNotesToOpen)
         os.system(process)
     time.sleep(2)
-
-
-def getConfig():
-    configFileName = getAbsPath("config.json")
-    with open(configFileName) as config:
-        config = json.loads(config.read())
-
-    return config
-
-
-def getAbsPath(relPath):
-    basepath = os.path.dirname(__file__)
-    fullPath = os.path.abspath(os.path.join(basepath, relPath))
-
-    return fullPath
 
 
 def getObsidenFilesToOpen(eventTitle):
