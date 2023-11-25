@@ -51,7 +51,6 @@ def getEventNames(path_to_folder):
     traverse(bookmarks["roots"]["bookmark_bar"], "")
 
     if foundFolder:
-        print("sub folder names", subfolderNames)
         return subfolderNames
     else:
         return None
