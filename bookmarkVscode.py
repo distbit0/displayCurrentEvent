@@ -44,5 +44,5 @@ if __name__ == "__main__":
         print("\n".join(getEventsForPath(currentPath)))
     elif len(sys.argv) == 2:
         eventSubString = sys.argv[1]
-        eventName = findEventName(eventSubString)
+        eventName = findEventName(eventSubString).lower()
         manageEventPaths(eventName, currentPath)

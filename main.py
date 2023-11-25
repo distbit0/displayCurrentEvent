@@ -192,11 +192,12 @@ def generateSleepTabUrl(url, title):
 
 
 def getVsCodeCommandUris(eventName):
+    eventName = eventName.lower()
     commands = []
     paths = utils.getVsCodePathsForEvent(eventName)
     for path in paths:
         command = "bash://code " + path
-        commands.append(command)
+        commands.append([command, ""])
     return commands
 
 
@@ -232,9 +233,9 @@ def openBookmarksForNewEvents(title, setEventArg):
                 time.sleep(0.07)
             elif getConfig()["notesAppUrlFilter"] in tabUrl:
                 time.sleep(0.5)
-                print("\n\n\nAbout to execute command: " + " ".join(command) + "\n\n\n")
                 command = [getConfig()["urlOpenCommand"], '"' + tabUrl + '"']
 
+            print("\n\n\nAbout to execute command: " + " ".join(command) + "\n\n\n")
             os.system(" ".join(command) + " &")
         return True
     return False
