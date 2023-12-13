@@ -215,13 +215,16 @@ def openBookmarksForNewEvents(title, setEventArg):
             else:
                 killProcesses(all=False, obsidianNotesToOpen=obsidianNotePaths)
         isFirstTab = True
+        nTabsToLazyOpen = int(getConfig()["nTabsToLazyOpen"])
+        i = 0
         for tab in tabsToOpen:
             tabUrl, tabTitle = tab
             if tabUrl.startswith("bash://"):
                 command = (tabUrl.replace("bash://", "")).split(" ")
             elif tabUrl.startswith("http"):
-                if getConfig()["lazyOpenTabs"]:
+                if i < nTabsToLazyOpen:
                     tabUrl = generateSleepTabUrl(tabUrl, tabTitle)
+                    i += 1
                 if isFirstTab:
                     command = [
                         getConfig()["browserCommand"] + " --new-window",

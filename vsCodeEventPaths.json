@@ -1,8 +1,5 @@
 {
-    "fringe": [
-        "/home/pimania/dev/fringe/primary-smart-contracts",
-        "/home/pimania/dev/fringe/into-resting"
-    ],
+    "fringe": [],
     "increment": [
         "/home/pimania/dev/increment/increment-protocol"
     ],
