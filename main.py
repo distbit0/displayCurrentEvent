@@ -222,9 +222,9 @@ def openBookmarksForNewEvents(title, setEventArg):
             if tabUrl.startswith("bash://"):
                 command = (tabUrl.replace("bash://", "")).split(" ")
             elif tabUrl.startswith("http"):
-                if i < nTabsToLazyOpen:
+                if i >= nTabsToLazyOpen:
                     tabUrl = generateSleepTabUrl(tabUrl, tabTitle)
-                    i += 1
+                i += 1
                 if isFirstTab:
                     command = [
                         getConfig()["browserCommand"] + " --new-window",

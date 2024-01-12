@@ -1,1 +1,1 @@
-NO WALK                 ||  INCREMENT               2.6
+WALK                 ||  DINNER               1.0  ||  MISC               3.0
