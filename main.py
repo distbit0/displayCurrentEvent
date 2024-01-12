@@ -2,7 +2,6 @@ import icalendar
 import urllib.parse
 import recurring_ical_events
 import urllib.request
-import random
 import datetime
 import os
 import json
@@ -270,9 +269,10 @@ def deleteObsidianTabs(obsidianNotesToOpen):
 
 def getCurrentEvents():
     # Constants
+    utils.downloadIcs()
     CACHE_FILE = "calendar_cache.ics"
-    URL = getConfig()["calendarUrl"]
-    # Check if ical file is cached
+    with open(getAbsPath(CACHE_FILE), "rb") as f:
+        ical_string = f.read()
 
     replacementEvents = open(getAbsPath("replacementEvents.json")).read()
     replacementEvents = json.loads(replacementEvents) if replacementEvents != "" else []
@@ -282,17 +282,6 @@ def getCurrentEvents():
             duration_seconds = float(event["end"]) - time.time()
             return {event["name"].upper(): duration_seconds}
 
-    should_download = (
-        not os.path.exists(getAbsPath(CACHE_FILE))
-        or random.randint(1, 100) < getConfig()["cacheRefreshProbability"] * 100
-    )
-    if should_download:
-        ical_string = urllib.request.urlopen(URL).read()
-        with open(getAbsPath(CACHE_FILE), "wb") as f:
-            f.write(ical_string)
-    else:
-        with open(getAbsPath(CACHE_FILE), "rb") as f:
-            ical_string = f.read()
     # Load calendar
     calendar = icalendar.Calendar.from_ical(ical_string)
 

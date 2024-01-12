@@ -8,7 +8,9 @@ from googleapiclient.discovery import build
 from icalendar import Calendar, Event
 import dateutil.parser
 from icalendar import vRecur
+from tzlocal import get_localzone
 import time
+import utils
 
 
 # Load Google Calendar API credentials
@@ -51,13 +53,13 @@ def export_events_to_ics(service, calendar_id, ics_file_path):
     cal = Calendar()
     events_result = service.events().list(calendarId=calendar_id).execute()
     events = events_result.get("items", [])
-
+    print(len(events))
     for event in events:
-        if "recurrence" not in event:
+        ical_event = Event()
+        print(event["status"])
+        if event["status"] == "cancelled":
             continue
         print(event)
-        ical_event = Event()
-
         # Convert and add start and end times
         start_dt = dateutil.parser.parse(event["start"]["dateTime"])
         end_dt = dateutil.parser.parse(event["end"]["dateTime"])
@@ -149,7 +151,6 @@ def delete_all_events(service, calendar_id, batch_size=50):
 def add_events_from_ics(service, calendar_id, ics_file_path, timezone_str):
     with open(ics_file_path, "rb") as f:
         gcal = Calendar.from_ical(f.read())
-
     timezone = pytz.timezone(timezone_str)
 
     def callback(request_id, response, exception):
@@ -211,22 +212,41 @@ def add_events_from_ics(service, calendar_id, ics_file_path, timezone_str):
     batch.execute()
 
 
+def get_event_timezone(calendar_id, service):
+    # Initialize the Google Calendar service
+
+    # Get the first event from the calendar
+    events_result = (
+        service.events()
+        .list(
+            calendarId=calendar_id, maxResults=1, showDeleted=False, singleEvents=True
+        )
+        .execute()
+    )
+    events = events_result.get("items", [])
+    if not events:
+        return None  # No events found in the calendar
+
+    # Get the timezone ID of the event
+    event_timezone_id = events[0].get("start", {}).get("timeZone")
+
+    return event_timezone_id
+
+
 # Main execution
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 calendar_id = "28a27e8ffdf1bfc180f78f96f1992f8dbb60e000ac88306236041c181c54f5fe@group.calendar.google.com"
-ics_file_path = (
-    "modified_calendar" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + ".ics"
-)
-
-new_timezone = "Europe/Istanbul"
 
 service = get_calendar_service()
 
-# Export events to ICS file with new timezone
-export_events_to_ics(service, calendar_id, ics_file_path)
+currentTz = str(get_localzone())
+gCalTz = get_event_timezone(calendar_id, service)
+print(f"Current timezone: {currentTz}, Google Calendar timezone: {gCalTz}")
+if gCalTz.lower() != currentTz.lower():
+    # Export events to ICS file with new timezone
+    utils.downloadIcs(forceDownload=True, backup=True)
+    # # # Delete all events in the Google Calendar
+    # delete_all_events(service, calendar_id)
 
-# Delete all events in the Google Calendar
-delete_all_events(service, calendar_id)
-
-# Re-import events from the ICS file
-add_events_from_ics(service, calendar_id, ics_file_path, new_timezone)
+    # # # Re-import events from the ICS file
+    # add_events_from_ics(service, calendar_id, currentTz)

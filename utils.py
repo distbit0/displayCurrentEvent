@@ -1,5 +1,8 @@
 import json
 import os
+import random
+import urllib
+import datetime
 
 
 def getConfig():
@@ -15,6 +18,30 @@ def getAbsPath(relPath):
     fullPath = os.path.abspath(os.path.join(basepath, relPath))
 
     return fullPath
+
+
+def downloadIcs(forceDownload=False, backup=False):
+    CACHE_FILE = "calendar_cache.ics"
+    URL = getConfig()["calendarUrl"]
+    # Check if ical file is cached
+
+    should_download = (
+        not os.path.exists(getAbsPath(CACHE_FILE))
+        or random.randint(1, 100) < getConfig()["cacheRefreshProbability"] * 100
+    ) or forceDownload
+    if should_download:
+        ical_string = urllib.request.urlopen(URL).read()
+        with open(getAbsPath(CACHE_FILE), "wb") as f:
+            f.write(ical_string)
+
+    if backup:
+        ics_file_path = (
+            "modified_calendar"
+            + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+            + ".ics"
+        )
+        with open(getAbsPath(ics_file_path), "wb") as f:
+            f.write(ical_string)
 
 
 def findEventName(eventNameSubstring):

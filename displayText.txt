@@ -1,1 +1,1 @@
-WALK                 ||  DINNER               1.0  ||  MISC               3.0
+WALK                 ||  MISC               1.5
