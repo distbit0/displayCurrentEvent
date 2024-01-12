@@ -1,11 +1,9 @@
 import os
-import pytz
-import datetime
+import subprocess
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-from icalendar import Calendar
 from tzlocal import get_localzone
 import time
 import utils
@@ -31,69 +29,72 @@ def get_calendar_service():
     return build("calendar", "v3", credentials=creds)
 
 
-def convert_rrule_value(key, value):
-    if key == "UNTIL":
-        # Parse UNTIL as datetime
-        return datetime.datetime.strptime(value, "%Y%m%dT%H%M%SZ")
-    elif key == "INTERVAL":
-        # Parse INTERVAL as integer
-        return int(value)
-    elif key == "BYDAY":
-        # BYDAY can be a single day or a list of days, return as is
-        return value.split(",") if "," in value else value
-    else:
-        # Return other values as they are (e.g., FREQ as string)
-        return value
+def delete_all_events(service, batch_size=1000):
+    calendar_id = utils.getConfig()["calendarId"]
 
-
-# Function to export events to an ICS file with timezone adjustment
-
-
-def delete_all_events(service, calendar_id, batch_size=50):
     def main():
-        events_result = (
-            service.events()
-            .list(calendarId=calendar_id, singleEvents=True, showDeleted=False)
-            .execute()
-        )
-        events = events_result.get("items", [])
+        def getAllEventIds():
+            page_token = None
+            all_ids = []
+            while True:
+                events_result = (
+                    service.events()
+                    .list(
+                        calendarId=calendar_id,
+                        singleEvents=False,
+                        showDeleted=False,
+                        maxResults=2500,
+                        pageToken=page_token,
+                    )
+                    .execute()
+                )
+                events = events_result.get("items", [])
+                page_token = events_result.get("nextPageToken")
+                print(f"Fetched {len(events)} events")
 
-        # If there are no more events, exit the loop
-        if not events:
+                recurringEventIds = [
+                    event["recurringEventId"]
+                    for event in events
+                    if "recurringEventId" in event
+                ]
+                ids = [event["id"] for event in events if "id" in event]
+                all_ids.extend(list(set(recurringEventIds + ids)))
+
+                if not page_token:
+                    break
+            return all_ids
+
+        ids = getAllEventIds()
+        print(f"Total {len(ids)} events to delete")
+
+        if not ids:
             return True
 
-        print(f"Deleting {len(events)} events in batches")
+        print(f"Deleting {len(ids)} events in batches")
+        i = 0
+        while True:
+            batch = service.new_batch_http_request()
+            startIndex = i * batch_size
+            endIndex = min((i + 1) * batch_size, len(ids))
+            idsToDelete = ids[startIndex:endIndex]
+            print(f"Batch {i}: Deleting events from {startIndex} to {endIndex}")
 
-        # Delete events in batches
-        batch = service.new_batch_http_request()
-        for event in events[:batch_size]:
-            if event["status"] != "cancelled":
-                try:
-                    print(event, "\n\n\n\n\n\n")
-                    batch.add(
-                        service.events().delete(
-                            calendarId=calendar_id, eventId=event["recurringEventId"]
-                        )
+            for id in idsToDelete:
+                batch.add(
+                    service.events().delete(
+                        calendarId=calendar_id,
+                        eventId=id,
                     )
+                )
 
-                    batch.add(
-                        service.events().delete(
-                            calendarId=calendar_id, eventId=event["id"]
-                        )
-                    )
-                except Exception as e:
-                    # Handle errors if needed
-                    pass
-            else:
-                print(" cancelled event")
+            try:
+                batch.execute()
+            except Exception as e:
+                print(e)
 
-        # Execute the batch request
-        try:
-            batch.execute()
-        except Exception as e:
-            # Handle batch execution errors if needed
-            print(e)
-            pass
+            i += 1
+            if endIndex >= len(ids):
+                break
 
     while True:
         try:
@@ -106,108 +107,52 @@ def delete_all_events(service, calendar_id, batch_size=50):
 
 
 # Function to add events from an ICS file
-def add_events_from_ics(service, calendar_id, timezone_str):
-    with open(utils.getAbsPath("calendar_cache.ics"), "rb") as f:
-        gcal = Calendar.from_ical(f.read())
-    timezone = pytz.timezone(timezone_str)
-
-    def callback(request_id, response, exception):
-        if exception is not None:
-            print(f"An error occurred: {exception}")
-        else:
-            print(f"Event created: {response.get('htmlLink')}")
-
-    batch = service.new_batch_http_request(callback=callback)
-    for component in gcal.walk():
-        if component.name == "VEVENT":
-            # Extract and adjust start and end times
-            start_time = component.get("dtstart").dt
-            end_time = component.get("dtend").dt
-
-            # if not start_time.tzinfo:
-            #     start_time = timezone.localize(start_time)
-            # else:
-            #     start_time = start_time.astimezone(timezone)
-
-            # if not end_time.tzinfo:
-            #     end_time = timezone.localize(end_time)
-            # else:
-            #     end_time = end_time.astimezone(timezone)
-
-            # Prepare the event dictionary
-            event = {
-                "summary": str(component.get("summary")),
-                "start": {"dateTime": start_time.isoformat(), "timeZone": timezone_str},
-                "end": {"dateTime": end_time.isoformat(), "timeZone": timezone_str},
-            }
-
-            # Handle recurrence
-            if component.get("rrule"):
-                rrule = (
-                    component.get("rrule")
-                    .to_ical()
-                    .decode("utf-8")
-                    .replace("\r\n ", "")
-                    .replace("\n ", "")
-                )
-                if "UNTIL" in rrule:
-                    # Extract UNTIL value and adjust its timezone
-                    until_value = rrule.split("UNTIL=")[1].split(";")[0]
-                    until_local = datetime.datetime.strptime(
-                        until_value.rstrip("Z"), "%Y%m%dT%H%M%S"
-                    )
-                    # until_local = timezone.localize(until_local)
-                    rrule = rrule.replace(
-                        until_value, until_local.strftime("%Y%m%dT%H%M%SZ")
-                    )
-
-                event["recurrence"] = [f"RRULE:{rrule}"]
-
-            print(event)
-
-            # Insert the event
-            batch.add(service.events().insert(calendarId=calendar_id, body=event))
-
-    # Execute the batch request
-    batch.execute()
 
 
-def get_event_timezone(calendar_id, service):
-    # Initialize the Google Calendar service
+def get_event_timezone():
+    event_timezone_id = "iuihhugfrudtyfygugugguy"
+    with open(utils.getAbsPath("calendar_cache.ics")) as f:
+        text = f.read()
+    for line in text.split("\n"):
+        if "TZID=" in line:
+            event_timezone_id = ":".join(line.split("TZID=")[1].split(":")[:-1])
+            break
 
-    # Get the first event from the calendar
-    events_result = (
-        service.events()
-        .list(
-            calendarId=calendar_id, maxResults=1, showDeleted=False, singleEvents=True
-        )
-        .execute()
-    )
-    events = events_result.get("items", [])
-    if not events:
-        return None  # No events found in the calendar
+    return event_timezone_id.strip()
 
-    # Get the timezone ID of the event
-    event_timezone_id = events[0].get("start", {}).get("timeZone")
 
-    return event_timezone_id
+def modifyIcs(old_tz, new_tz):
+    with open(utils.getAbsPath("calendar_cache.ics")) as f:
+        text = f.read()
+    print("replacing " + old_tz + " with " + new_tz)
+    text = str(text.replace(old_tz, new_tz))
+    tzDefStart, tzDefEnd = text.find("BEGIN:VTIMEZONE"), text.find(
+        "END:VTIMEZONE"
+    ) + len("END:VTIMEZONE")
+    text = str(text.replace(text[tzDefStart:tzDefEnd], ""))
+    text = "\n".join([line for line in text.splitlines() if "DTSTAMP" not in line])
+    currentDate = time.strftime("%Y-%m-%d")
+    with open(utils.getConfig()["newIcsSavePath"] + currentDate + ".ics", "w") as f:
+        f.write(text)
+
+
+def open_in_brave(url):
+    subprocess.run(["xdg-open", url], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
 # Main execution
-calendar_id = utils.getConfig()["calendarId"]
-
 service = get_calendar_service()
 
 currentTz = str(get_localzone())
-gCalTz = get_event_timezone(calendar_id, service)
+gCalTz = get_event_timezone()
+
 print(f"Current timezone: {currentTz}, Google Calendar timezone: {gCalTz}")
 
 
-# if gCalTz.lower() != currentTz.lower():
-#     # Export events to ICS file with new timezone
-#     utils.downloadIcs(forceDownload=True, backup=True)
-#     # # # Delete all events in the Google Calendar
-# delete_all_events(service, calendar_id)
-#     # # # Re-import events from the ICS file
-calendar_id = "c0d174e7a53c03e072a8766c6947fa39a575d58d2c03e5fa893a594903a47e40@group.calendar.google.com"
-add_events_from_ics(service, calendar_id, currentTz)
+if gCalTz.lower() != currentTz.lower():
+    utils.downloadIcs(forceDownload=True, backup=True)
+    gCalTz = get_event_timezone()
+    if gCalTz.lower() != currentTz.lower():
+        delete_all_events(service)
+        modifyIcs(gCalTz, currentTz)
+        open_in_brave("https://calendar.google.com/calendar/u/0/r/settings/export")
