@@ -5,9 +5,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-from icalendar import Calendar, Event
-import dateutil.parser
-from icalendar import vRecur
+from icalendar import Calendar
 from tzlocal import get_localzone
 import time
 import utils
@@ -49,46 +47,6 @@ def convert_rrule_value(key, value):
 
 
 # Function to export events to an ICS file with timezone adjustment
-def export_events_to_ics(service, calendar_id, ics_file_path):
-    cal = Calendar()
-    events_result = service.events().list(calendarId=calendar_id).execute()
-    events = events_result.get("items", [])
-    print(len(events))
-    for event in events:
-        ical_event = Event()
-        print(event["status"])
-        if event["status"] == "cancelled":
-            continue
-        print(event)
-        # Convert and add start and end times
-        start_dt = dateutil.parser.parse(event["start"]["dateTime"])
-        end_dt = dateutil.parser.parse(event["end"]["dateTime"])
-
-        ical_event.add("dtstart", start_dt)
-        ical_event.add("dtend", end_dt)
-        ical_event.add("summary", event["summary"])
-
-        if "recurrence" in event:
-            for rrule_str in event["recurrence"]:
-                if rrule_str.startswith("RRULE:"):
-                    rrule_properties = rrule_str.replace("RRULE:", "").split(";")
-                    rrule_dict = {
-                        prop.split("=")[0].lower(): convert_rrule_value(
-                            prop.split("=")[0], prop.split("=")[1]
-                        )
-                        for prop in rrule_properties
-                    }
-                    rrule = vRecur(rrule_dict)
-                    ical_event.add("rrule", rrule)
-
-        cal.add_component(ical_event)
-        cal.to_ical()
-
-    with open(ics_file_path, "wb") as f:
-        f.write(cal.to_ical())
-
-
-# Function to delete all events in a calendar
 
 
 def delete_all_events(service, calendar_id, batch_size=50):
@@ -148,8 +106,8 @@ def delete_all_events(service, calendar_id, batch_size=50):
 
 
 # Function to add events from an ICS file
-def add_events_from_ics(service, calendar_id, ics_file_path, timezone_str):
-    with open(ics_file_path, "rb") as f:
+def add_events_from_ics(service, calendar_id, timezone_str):
+    with open(utils.getAbsPath("calendar_cache.ics"), "rb") as f:
         gcal = Calendar.from_ical(f.read())
     timezone = pytz.timezone(timezone_str)
 
@@ -246,7 +204,6 @@ if gCalTz.lower() != currentTz.lower():
     # Export events to ICS file with new timezone
     utils.downloadIcs(forceDownload=True, backup=True)
     # # # Delete all events in the Google Calendar
-    # delete_all_events(service, calendar_id)
-
+    delete_all_events(service, calendar_id)
     # # # Re-import events from the ICS file
-    # add_events_from_ics(service, calendar_id, currentTz)
+    add_events_from_ics(service, calendar_id, currentTz)

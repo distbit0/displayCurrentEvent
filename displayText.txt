@@ -1,1 +1,1 @@
-WALK                 ||  MISC               1.5
+WALK                 ||  MISC               1.4
