@@ -124,15 +124,15 @@ def add_events_from_ics(service, calendar_id, timezone_str):
             start_time = component.get("dtstart").dt
             end_time = component.get("dtend").dt
 
-            if not start_time.tzinfo:
-                start_time = timezone.localize(start_time)
-            else:
-                start_time = start_time.astimezone(timezone)
+            # if not start_time.tzinfo:
+            #     start_time = timezone.localize(start_time)
+            # else:
+            #     start_time = start_time.astimezone(timezone)
 
-            if not end_time.tzinfo:
-                end_time = timezone.localize(end_time)
-            else:
-                end_time = end_time.astimezone(timezone)
+            # if not end_time.tzinfo:
+            #     end_time = timezone.localize(end_time)
+            # else:
+            #     end_time = end_time.astimezone(timezone)
 
             # Prepare the event dictionary
             event = {
@@ -154,14 +154,16 @@ def add_events_from_ics(service, calendar_id, timezone_str):
                     # Extract UNTIL value and adjust its timezone
                     until_value = rrule.split("UNTIL=")[1].split(";")[0]
                     until_local = datetime.datetime.strptime(
-                        until_value, "%Y%m%dT%H%M%S"
+                        until_value.rstrip("Z"), "%Y%m%dT%H%M%S"
                     )
-                    until_local = timezone.localize(until_local)
+                    # until_local = timezone.localize(until_local)
                     rrule = rrule.replace(
                         until_value, until_local.strftime("%Y%m%dT%H%M%SZ")
                     )
 
                 event["recurrence"] = [f"RRULE:{rrule}"]
+
+            print(event)
 
             # Insert the event
             batch.add(service.events().insert(calendarId=calendar_id, body=event))
@@ -192,18 +194,20 @@ def get_event_timezone(calendar_id, service):
 
 
 # Main execution
-SCOPES = ["https://www.googleapis.com/auth/calendar"]
-calendar_id = "28a27e8ffdf1bfc180f78f96f1992f8dbb60e000ac88306236041c181c54f5fe@group.calendar.google.com"
+calendar_id = utils.getConfig()["calendarId"]
 
 service = get_calendar_service()
 
 currentTz = str(get_localzone())
 gCalTz = get_event_timezone(calendar_id, service)
 print(f"Current timezone: {currentTz}, Google Calendar timezone: {gCalTz}")
-if gCalTz.lower() != currentTz.lower():
-    # Export events to ICS file with new timezone
-    utils.downloadIcs(forceDownload=True, backup=True)
-    # # # Delete all events in the Google Calendar
-    delete_all_events(service, calendar_id)
-    # # # Re-import events from the ICS file
-    add_events_from_ics(service, calendar_id, currentTz)
+
+
+# if gCalTz.lower() != currentTz.lower():
+#     # Export events to ICS file with new timezone
+#     utils.downloadIcs(forceDownload=True, backup=True)
+#     # # # Delete all events in the Google Calendar
+# delete_all_events(service, calendar_id)
+#     # # # Re-import events from the ICS file
+calendar_id = "c0d174e7a53c03e072a8766c6947fa39a575d58d2c03e5fa893a594903a47e40@group.calendar.google.com"
+add_events_from_ics(service, calendar_id, currentTz)

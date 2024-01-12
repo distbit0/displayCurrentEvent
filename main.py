@@ -332,17 +332,17 @@ def main(setEventArg):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Calendar event manager")
-    parser.add_argument("--setEvent", default="", type=str)
-    parser.add_argument("-l", default="", type=str)  ## length of event in hours
-    parser.add_argument(
-        "-s", default="", type=str
-    )  # start time of event e.g. 14 = 2pm and 9 = 9am
-    parser.add_argument(
-        "-o", action="store_true"
-    )  # whether to just only open the tabs/windows rather than also saving the event
+    # parser = argparse.ArgumentParser(description="Calendar event manager")
+    # parser.add_argument("--setEvent", default="", type=str)
+    # parser.add_argument("-l", default="", type=str)  ## length of event in hours
+    # parser.add_argument(
+    #     "-s", default="", type=str
+    # )  # start time of event e.g. 14 = 2pm and 9 = 9am
+    # parser.add_argument(
+    #     "-o", action="store_true"
+    # )  # whether to just only open the tabs/windows rather than also saving the event
 
-    args = parser.parse_args()
-    if args.setEvent != "":
-        replaceEvent(args.setEvent, args.l, args.s, args.o)
-    main(args.setEvent)
+    # args = parser.parse_args()
+    # if args.setEvent != "":
+    #     replaceEvent(args.setEvent, args.l, args.s, args.o)
+    # main(args.setEvent)
