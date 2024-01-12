@@ -36,9 +36,7 @@ def downloadIcs(forceDownload=False, backup=False):
 
     if backup:
         ics_file_path = (
-            "modified_calendar"
-            + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-            + ".ics"
+            "modified_calendar" + datetime.datetime.now().strftime("%Y%m%d") + ".ics"
         )
         with open(getAbsPath(ics_file_path), "wb") as f:
             f.write(ical_string)
