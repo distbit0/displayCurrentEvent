@@ -140,14 +140,10 @@ def open_in_brave(url):
     subprocess.run(["xdg-open", url], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
-# Main execution
 service = get_calendar_service()
-
 currentTz = str(get_localzone())
 gCalTz = get_event_timezone()
-
 print(f"Current timezone: {currentTz}, Google Calendar timezone: {gCalTz}")
-
 
 if gCalTz.lower() != currentTz.lower():
     utils.downloadIcs(forceDownload=True, backup=True)
@@ -156,4 +152,4 @@ if gCalTz.lower() != currentTz.lower():
         noEventsToDelete = delete_all_events(service)
         if not noEventsToDelete:
             modifyIcs(gCalTz, currentTz)
-            open_in_brave("https://calendar.google.com/calendar/u/0/r/settings/export")
+        open_in_brave("https://calendar.google.com/calendar/u/0/r/settings/export")
