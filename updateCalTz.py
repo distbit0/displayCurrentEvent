@@ -67,9 +67,6 @@ def delete_all_events(service, batch_size=1000):
         ids = getAllEventIds()
         print(f"Total {len(ids)} events to delete")
 
-        if not ids:
-            return True
-
         print(f"Deleting {len(ids)} events in batches")
         i = 0
         while True:
@@ -95,15 +92,18 @@ def delete_all_events(service, batch_size=1000):
             i += 1
             if endIndex >= len(ids):
                 break
+        return ids
 
+    noEventsToDelete = True
     while True:
         try:
-            finished = main()
-            if finished:
-                break
+            ids = main()
+            if not ids:
+                return noEventsToDelete
         except Exception as e:
             print(e)
             time.sleep(20)
+        noEventsToDelete = False
 
 
 # Function to add events from an ICS file
@@ -153,6 +153,7 @@ if gCalTz.lower() != currentTz.lower():
     utils.downloadIcs(forceDownload=True, backup=True)
     gCalTz = get_event_timezone()
     if gCalTz.lower() != currentTz.lower():
-        delete_all_events(service)
-        modifyIcs(gCalTz, currentTz)
-        open_in_brave("https://calendar.google.com/calendar/u/0/r/settings/export")
+        noEventsToDelete = delete_all_events(service)
+        if not noEventsToDelete:
+            modifyIcs(gCalTz, currentTz)
+            open_in_brave("https://calendar.google.com/calendar/u/0/r/settings/export")
