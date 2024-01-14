@@ -1,1 +1,1 @@
-NO WALK                 ||  MISC               1.6
+WALK                 ||  INCREMENT               1.4
