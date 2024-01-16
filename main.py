@@ -36,6 +36,9 @@ def display_dialog(message, display_time):
     dialog_window.title("Message")
     dialog_window.protocol("WM_DELETE_WINDOW", on_close)  # Disable the close button
 
+    # Set the window to be always on top
+    dialog_window.attributes("-topmost", True)
+
     # Position the dialog in the center of the screen
     dialog_window.geometry(
         "+{}+{}".format(

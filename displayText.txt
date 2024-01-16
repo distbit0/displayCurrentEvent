@@ -1,1 +1,1 @@
-INCREMENT               4.3
+FRINGE               2.5
