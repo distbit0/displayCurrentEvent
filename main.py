@@ -1,4 +1,7 @@
 import icalendar
+import tkinter as tk
+import time
+import threading
 import urllib.parse
 import recurring_ical_events
 import urllib.request
@@ -11,6 +14,49 @@ from dateutil.tz import tzlocal
 import subprocess
 import utils
 from utils import getAbsPath, getConfig, findEventName
+
+
+def display_dialog(message, display_time):
+    """
+    Displays a dialog box with a given message for a specified amount of time.
+
+    :param message: The message to be displayed in the dialog box.
+    :param display_time: Time in seconds for which the dialog is displayed.
+    """
+
+    def on_close():
+        pass  # Disable close functionality
+
+    # Create the main window
+    root = tk.Tk()
+    root.withdraw()  # Hide the main window
+
+    # Create a top-level window for the dialog
+    dialog_window = tk.Toplevel(root)
+    dialog_window.title("Message")
+    dialog_window.protocol("WM_DELETE_WINDOW", on_close)  # Disable the close button
+
+    # Position the dialog in the center of the screen
+    dialog_window.geometry(
+        "+{}+{}".format(
+            root.winfo_screenwidth() // 2 - dialog_window.winfo_reqwidth() // 2,
+            root.winfo_screenheight() // 2 - dialog_window.winfo_reqheight() // 2,
+        )
+    )
+
+    # Display the message
+    tk.Label(dialog_window, text=message, padx=20, pady=20).pack()
+
+    # Function to close the dialog after a delay
+    def close_dialog():
+        time.sleep(display_time)
+        dialog_window.destroy()
+        root.quit()
+
+    # Run the closing function in a separate thread
+    threading.Thread(target=close_dialog).start()
+
+    root.mainloop()
 
 
 def getObsidianUri(file_path, vault_root):
@@ -304,6 +350,7 @@ def getCurrentEvents():
 def main(setEventArg):
     currentEvents = getCurrentEvents()
     messageText = []
+    newEvent = False
     # Display the event title and time remaining in a popup
     for event in currentEvents:
         title = event
@@ -314,19 +361,23 @@ def main(setEventArg):
                     open(getAbsPath("currentEvent.txt"), "w").write(title)
             else:
                 open(getAbsPath("currentEvent.txt"), "w").write(title)
+            newEvent = True
+
         hours = duration_seconds / 3600
         message = title + " " * 15 + str(round(hours, 1))
         messageText.append(message)
 
     # determine if today is an odd or even day
-    todayIseven = datetime.datetime.today().weekday() % 2 == 0
-    spaceString = " " * 15
-    if todayIseven:
-        messageText.insert(0, "WALK" + spaceString)
-    else:
-        messageText.insert(0, "NO WALK" + spaceString)
+    # todayIseven = datetime.datetime.today().weekday() % 2 == 0
+    # spaceString = " " * 15
+    # if todayIseven:
+    #     messageText.insert(0, "WALK" + spaceString)
+    # else:
+    #     messageText.insert(0, "NO WALK" + spaceString)
 
     messageText = "  ||  ".join(messageText)
+    if newEvent:
+        display_dialog(messageText, 10)
     with open(getAbsPath("displayText.txt"), "w") as f:
         f.write(messageText)
 
