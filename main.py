@@ -367,7 +367,6 @@ def main(setEventArg):
         message = title + " " * 15 + str(round(hours, 1))
         messageText.append(message)
 
-    # determine if today is an odd or even day
     # todayIseven = datetime.datetime.today().weekday() % 2 == 0
     # spaceString = " " * 15
     # if todayIseven:
