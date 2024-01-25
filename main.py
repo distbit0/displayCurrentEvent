@@ -62,44 +62,8 @@ def display_dialog(message, display_time):
     root.mainloop()
 
 
-def getObsidianUri(file_path, vault_root):
-    # Validate input paths
-    vault_name = os.path.basename(vault_root)
-    if not os.path.isfile(file_path):
-        raise FileNotFoundError(
-            "The file path provided does not exist or is not a file."
-        )
-    if not os.path.isdir(vault_root):
-        raise NotADirectoryError("The vault root provided is not a directory.")
-
-    # Ensure the file path is relative to the vault root
-    relative_path = os.path.relpath(file_path, vault_root)
-
-    # Replace backslashes with forward slashes for URI compatibility
-    relative_path = relative_path.replace(os.sep, "/")
-
-    # Encode the filepath and vault name components of the URI
-    encoded_vault_name = urllib.parse.quote(vault_name)
-    encoded_file_path = urllib.parse.quote(relative_path)
-
-    # Construct the Obsidian Advanced URI with the provided vault name
-    # and an 'openmode' parameter set to 'tab'
-    uri = f"obsidian://advanced-uri?vault={encoded_vault_name}&filepath={encoded_file_path}&openmode=tab"
-
-    return uri
-
-
-def sortObsidianToEnd(tabs):
-    notesAppUrlFilter = getConfig()["notesAppUrlFilter"]
-    obsidianTabs = [tab for tab in tabs if notesAppUrlFilter in tab[0].lower()]
-    for tab in obsidianTabs:
-        tabs.remove(tab)
-    tabs.extend(obsidianTabs)
-    return tabs
-
-
-def getTabsToOpen(path_to_folder):
-    # Load the bookmarks file
+def getTabsToOpen(title):
+    path_to_folder = getConfig()["bookmarksFolderPath"] + "/x" + title
     tabsToOpen = []
     foundFolder = []
     with open(getConfig()["bookmarksFilePath"], "r") as f:
@@ -123,12 +87,11 @@ def getTabsToOpen(path_to_folder):
     # Start traversal from the root
     traverse(bookmarks["roots"]["bookmark_bar"], "")
 
-    tabsToOpen = sortObsidianToEnd(tabsToOpen)
-
-    if foundFolder:
-        return tabsToOpen
-    else:
-        return []  # None
+    tabsToOpen = sortObsidianToEnd(tabsToOpen) if foundFolder else []
+    obsidianUris, obsidianNotePaths = getObsidenFilesToOpen(title)
+    vsCodeCommandUris = getVsCodeCommandUris(title)
+    tabsToOpen.extend(obsidianUris + vsCodeCommandUris)
+    return tabsToOpen, obsidianNotePaths
 
 
 def timeStrToUnix(time_string):
@@ -166,7 +129,8 @@ def replaceEvent(
     if eventFilter == "clear":
         replacementEvent = ""
     elif onlyOpen:
-        openBookmarksForNewEvents(eventName)
+        tabsToOpen, obsidianNotePaths = getTabsToOpen(eventName)
+        openBookmarksForNewEvents(tabsToOpen, obsidianNotePaths, onlyOpen)
         return
     else:
         eventStartTime = (
@@ -249,13 +213,8 @@ def getVsCodeCommandUris(eventName):
     return commands
 
 
-def openBookmarksForNewEvents(title, setEventArg):
-    tabsToOpen = getTabsToOpen(getConfig()["bookmarksFolderPath"] + "/x" + title)
-    obsidianUris, obsidianNotePaths = getObsidenFilesToOpen(title)
-    vsCodeCommandUris = getVsCodeCommandUris(title)
+def openBookmarksForNewEvents(tabsToOpen, obsidianNotePaths, setEventArg):
     killCommentedProcesses = True if setEventArg else False
-    tabsToOpen.extend(obsidianUris)
-    tabsToOpen.extend(vsCodeCommandUris)
     if tabsToOpen != []:
         if getConfig()["killUncommentedProcesses"]:
             if killCommentedProcesses:
@@ -303,19 +262,6 @@ def durationOfLongestActiveEvent():
     return longestDuration
 
 
-def deleteObsidianTabs(obsidianNotesToOpen):
-    obsidianWorkSpaceFile = (
-        getConfig()["obsidianVaultPath"] + "/.obsidian/workspace.json"
-    )
-    contents = json.load(open(obsidianWorkSpaceFile))
-    contents["main"]["id"] = ""
-    contents["main"]["children"] = []
-    contents["active"] = ""
-    contents["lastOpenFiles"][0] = obsidianNotesToOpen[0]
-    with open(obsidianWorkSpaceFile, "w") as f:
-        json.dump(contents, f)
-
-
 def getCurrentEvents():
     # Constants
     utils.downloadIcs()
@@ -359,23 +305,18 @@ def main(setEventArg):
         title = event
         duration_seconds = currentEvents[event]
         if open(getAbsPath("currentEvent.txt")).read().lower() != title.lower():
-            if getConfig()["autoOpen"] or setEventArg:
-                if openBookmarksForNewEvents(title, setEventArg):
-                    open(getAbsPath("currentEvent.txt"), "w").write(title)
-            else:
+            tabsToOpen, obsidianNotePaths = getTabsToOpen(title)
+            if tabsToOpen:
+                if getConfig()["autoOpen"] or setEventArg:
+                    openBookmarksForNewEvents(
+                        tabsToOpen, obsidianNotePaths, setEventArg
+                    )
                 open(getAbsPath("currentEvent.txt"), "w").write(title)
-            newEvent = True
+                newEvent = True
 
         hours = duration_seconds / 3600
         message = title + " " * 15 + str(round(hours, 1))
         messageText.append(message)
-
-    # todayIseven = datetime.datetime.today().weekday() % 2 == 0
-    # spaceString = " " * 15
-    # if todayIseven:
-    #     messageText.insert(0, "WALK" + spaceString)
-    # else:
-    #     messageText.insert(0, "NO WALK" + spaceString)
 
     messageText = "  ||  ".join(messageText)
     if newEvent:
