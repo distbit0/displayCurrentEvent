@@ -212,7 +212,7 @@ def process_event(event, duration_seconds, set_event_flag):
         if tabs_to_open:
             if should_open_tabs(set_event_flag):
                 openBookmarksForNewEvents(tabs_to_open, set_event_flag)
-            utils.write_current_event_title(title)
+                utils.write_current_event_title(title)
             is_new_event = True
 
     return title, duration_seconds, is_new_event
