@@ -25,15 +25,6 @@ def getObsidianUri(file_path, vault_root):
     return uri
 
 
-def sortObsidianToEnd(tabs):
-    notesAppUrlFilter = getConfig()["notesAppUrlFilter"]
-    obsidianTabs = [tab for tab in tabs if notesAppUrlFilter in tab[0].lower()]
-    for tab in obsidianTabs:
-        tabs.remove(tab)
-    tabs.extend(obsidianTabs)
-    return tabs
-
-
 def deleteObsidianTabs(obsidianNotesToOpen):
     obsidianWorkSpaceFile = (
         getConfig()["obsidianVaultPath"] + "/.obsidian/workspace.json"

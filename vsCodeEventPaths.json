@@ -1,9 +1,12 @@
 {
-    "fringe": [],
+    "fringe": [
+        "/home/pimania/dev/fringe/primary-smart-contracts"
+    ],
     "increment": [
         "/home/pimania/dev/increment/increment-protocol"
     ],
     "other dev": [
         "/home/pimania/dev/anonShirts"
-    ]
+    ],
+    "": []
 }

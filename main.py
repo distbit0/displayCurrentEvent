@@ -1,4 +1,8 @@
 import icalendar
+import json
+import os
+import glob
+import sqlite3
 import tkinter as tk
 import time
 import threading
@@ -86,12 +90,10 @@ def getTabsToOpen(title):
 
     # Start traversal from the root
     traverse(bookmarks["roots"]["bookmark_bar"], "")
-
-    tabsToOpen = sortObsidianToEnd(tabsToOpen) if foundFolder else []
-    obsidianUris, obsidianNotePaths = getObsidenFilesToOpen(title)
-    vsCodeCommandUris = getVsCodeCommandUris(title)
-    tabsToOpen.extend(obsidianUris + vsCodeCommandUris)
-    return tabsToOpen, obsidianNotePaths
+    notePaths = getNotePathsToOpen(title)
+    vsCodeCommandUris = getVsCodeCommandUris(title, notePaths)
+    tabsToOpen.extend(vsCodeCommandUris)
+    return tabsToOpen
 
 
 def timeStrToUnix(time_string):
@@ -129,8 +131,8 @@ def replaceEvent(
     if eventFilter == "clear":
         replacementEvent = ""
     elif onlyOpen:
-        tabsToOpen, obsidianNotePaths = getTabsToOpen(eventName)
-        openBookmarksForNewEvents(tabsToOpen, obsidianNotePaths, onlyOpen)
+        tabsToOpen = getTabsToOpen(eventName)
+        openBookmarksForNewEvents(tabsToOpen, onlyOpen)
         return
     else:
         eventStartTime = (
@@ -157,26 +159,79 @@ def replaceEvent(
         f.write(json.dumps(replacementEvents))
 
 
-def killProcesses(all=False, obsidianNotesToOpen=[]):
+def close_all_tabs_in_vscode_workspace(workspace_path):
+    workspaceConfigDir = ""
+    workspace_path = workspace_path.rstrip("/")
+    vscode_workspace_storage = os.path.expanduser(
+        "~/.config/Code/User/workspaceStorage/"
+    )
+
+    # Find the workspace storage folder for the given workspace
+    workspace_state_files = glob.glob(
+        f"{vscode_workspace_storage}/**/workspace.json", recursive=True
+    )
+    meta_state_files = glob.glob(
+        f"{vscode_workspace_storage}/**/meta.json", recursive=True
+    )
+    for state_file in workspace_state_files:
+        state_data = json.load(open(state_file, "r"))
+        folderName = state_data.get("folder", "")
+        if folderName == workspace_path.split("/")[-1]:
+            workspaceConfigDir = state_file.replace("workspace.json", "")
+            break
+
+    if not workspaceConfigDir:
+        for state_file in meta_state_files:
+            state_data = json.load(open(state_file, "r"))
+            folderName = state_data.get("name", "")
+            if folderName == workspace_path.split("/")[-1]:
+                workspaceConfigDir = state_file.replace("meta.json", "")
+                break
+
+    if not workspaceConfigDir:
+        print(
+            f"No workspace state file found for workspace: {workspace_path} so could not close tabs"
+        )
+        return
+
+    backupDbPath = workspaceConfigDir + "state.vscdb.bakup"
+    sqlite_db_path = workspaceConfigDir + "state.vscdb"
+
+    if os.path.exists(backupDbPath):
+        os.remove(backupDbPath)
+
+    with sqlite3.connect(sqlite_db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT rowid FROM ItemTable WHERE key='memento/workbench.parts.editor'"
+        )
+        rowid = cursor.fetchone()
+        if rowid:
+            cursor.execute(f"DELETE FROM ItemTable WHERE rowid={rowid[0]}")
+            conn.commit()
+    print(f"Closed all tabs in workspace: {workspace_path}")
+
+
+def killProcesses(all=False):
     processesToKill = getConfig()["processesToKill"]
     for process in processesToKill:
         if all:
             if process[0] == "#":
                 process = process[1:]
-        if "obsidian" in process.lower() and process[0] != "#":
-            deleteObsidianTabs(obsidianNotesToOpen)
+        print(f"Killing process: {process}")
         os.system(process)
+        if "code" in process.lower() and process[0] != "#":
+            close_all_tabs_in_vscode_workspace(getConfig()["noteVaultPath"])
     time.sleep(2)
 
 
-def getObsidenFilesToOpen(eventTitle):
-    obsidianFilesToOpen = []
-    obsidianNotePaths = []
-    obsidianVaultPath = getConfig()["obsidianVaultPath"]
+def getNotePathsToOpen(eventTitle):
+    notePaths = []
+    noteVaultPath = getConfig()["noteVaultPath"]
     compactEventTitle = "#" + eventTitle.lower().replace(" ", "")
 
     # Use the 'find' command to search for files containing the compact event title
-    command = f"find {obsidianVaultPath} -type f -not -path '*/\\.*' -exec grep -l '{compactEventTitle}' {{}} \\;"
+    command = f"find {noteVaultPath} -type f -not -path '*/\\.*' -exec grep -l '{compactEventTitle}' {{}} \\;"
     output = subprocess.check_output(command, shell=True).decode()
 
     # Split the output by newline to get the file paths
@@ -184,10 +239,8 @@ def getObsidenFilesToOpen(eventTitle):
     for file_path in file_paths:
         if file_path == "":
             continue
-        pathRelativeToVault = os.path.relpath(file_path, obsidianVaultPath)
-        obsidianFilesToOpen.append([getObsidianUri(file_path, obsidianVaultPath), ""])
-        obsidianNotePaths.append(pathRelativeToVault)
-    return obsidianFilesToOpen, obsidianNotePaths
+        notePaths.append(file_path)
+    return notePaths
 
 
 def generateSleepTabUrl(url, title):
@@ -203,35 +256,41 @@ def generateSleepTabUrl(url, title):
     return sleep_url
 
 
-def getVsCodeCommandUris(eventName):
-    eventName = eventName.lower()
+def getVsCodeCommandUris(eventName, notePaths):
     commands = []
-    paths = utils.getVsCodePathsForEvent(eventName)
-    for path in paths:
-        command = "bash://code " + path
-        commands.append([command, ""])
+    commands.append(['bash://code "' + getConfig()["noteVaultPath"] + '"', ""])
+    for path in notePaths:
+        commands.append(['bash://code -r "' + path + '"', ""])
+    for path in utils.getVsCodePathsForEvent(eventName.lower()):
+        commands.append(['bash://code "' + path + '"', ""])
+
     return commands
 
 
-def openBookmarksForNewEvents(tabsToOpen, obsidianNotePaths, setEventArg):
+def openBookmarksForNewEvents(tabsToOpen, setEventArg):
     killCommentedProcesses = True if setEventArg else False
     if tabsToOpen != []:
         if getConfig()["killUncommentedProcesses"]:
             if killCommentedProcesses:
-                killProcesses(all=True, obsidianNotesToOpen=obsidianNotePaths)
+                killProcesses(all=True)
             else:
-                killProcesses(all=False, obsidianNotesToOpen=obsidianNotePaths)
+                killProcesses(all=False)
         isFirstTab = True
         nTabsToLazyOpen = int(getConfig()["nTabsToLazyOpen"])
-        i = 0
+        httpUrlCount = 0
+        firstVsCodeUrl = True
         for tab in tabsToOpen:
             tabUrl, tabTitle = tab
             if tabUrl.startswith("bash://"):
                 command = (tabUrl.replace("bash://", "")).split(" ")
+                if "code" in command[0]:
+                    if firstVsCodeUrl:
+                        time.sleep(1)
+                    time.sleep(0.14)
+                    firstVsCodeUrl = False
             elif tabUrl.startswith("http"):
-                if i >= nTabsToLazyOpen:
+                if httpUrlCount >= nTabsToLazyOpen:
                     tabUrl = generateSleepTabUrl(tabUrl, tabTitle)
-                i += 1
                 if isFirstTab:
                     command = [
                         getConfig()["browserCommand"] + " --new-window",
@@ -240,11 +299,8 @@ def openBookmarksForNewEvents(tabsToOpen, obsidianNotePaths, setEventArg):
                     isFirstTab = False
                 else:
                     command = [getConfig()["browserCommand"], '"' + tabUrl + '"']
-                time.sleep(0.07)
-            elif getConfig()["notesAppUrlFilter"] in tabUrl:
-                time.sleep(0.5)
-                command = [getConfig()["urlOpenCommand"], '"' + tabUrl + '"']
-
+                time.sleep(0.14)
+                httpUrlCount += 1
             print("\n\n\nAbout to execute command: " + " ".join(command) + "\n\n\n")
             os.system(" ".join(command) + " &")
         return True
@@ -263,7 +319,6 @@ def durationOfLongestActiveEvent():
 
 
 def getCurrentEvents():
-    # Constants
     utils.downloadIcs()
     CACHE_FILE = "calendar_cache.ics"
     with open(getAbsPath(CACHE_FILE), "rb") as f:
@@ -279,9 +334,6 @@ def getCurrentEvents():
 
     # Load calendar
     calendar = icalendar.Calendar.from_ical(ical_string)
-
-    # Get events at current time
-    ## get name of my current timezone
 
     local_tz = datetime.datetime.now(tzlocal()).tzinfo
     now = datetime.datetime.now(local_tz)
@@ -305,12 +357,10 @@ def main(setEventArg):
         title = event
         duration_seconds = currentEvents[event]
         if open(getAbsPath("currentEvent.txt")).read().lower() != title.lower():
-            tabsToOpen, obsidianNotePaths = getTabsToOpen(title)
+            tabsToOpen = getTabsToOpen(title)
             if tabsToOpen:
                 if getConfig()["autoOpen"] or setEventArg:
-                    openBookmarksForNewEvents(
-                        tabsToOpen, obsidianNotePaths, setEventArg
-                    )
+                    openBookmarksForNewEvents(tabsToOpen, setEventArg)
                 open(getAbsPath("currentEvent.txt"), "w").write(title)
                 newEvent = True
 
@@ -337,6 +387,9 @@ if __name__ == "__main__":
     )  # whether to just only open the tabs/windows rather than also saving the event
 
     args = parser.parse_args()
-    if args.setEvent != "":
-        replaceEvent(args.setEvent, args.l, args.s, args.o)
-    main(args.setEvent)
+    setEvent = args.setEvent.replace(
+        "current", open(getAbsPath("currentEvent.txt")).read()
+    )
+    if setEvent != "":
+        replaceEvent(setEvent, args.l, args.s, args.o)
+    main(setEvent)
