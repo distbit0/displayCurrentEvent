@@ -1,7 +1,13 @@
 import json
+import glob
+import sqlite3
+import tkinter as tk
+import threading
+import urllib.parse
+import urllib
 import os
 import random
-import urllib
+import time
 import datetime
 
 
@@ -87,3 +93,135 @@ def getVsCodePathsForEvent(eventName):
     if eventName not in directoryMap:
         return []
     return directoryMap[eventName]
+
+
+def write_current_event_title(title):
+    with open(getAbsPath("currentEvent.txt"), "w") as file:
+        file.write(title)
+
+
+def read_current_event_title():
+    with open(getAbsPath("currentEvent.txt")) as file:
+        return file.read()
+
+
+def executeCommand(command):
+    if type(command) == list:
+        fullCommand = " ".join(command) + " &"
+    else:
+        fullCommand = command
+    print(f"\n\n\nAbout to execute command: {fullCommand}\n\n\n")
+    os.system(fullCommand)
+
+
+def generateSleepTabUrl(url, title):
+    encoded_url = urllib.parse.quote(url)
+    encoded_title = urllib.parse.quote(title)
+    sleep_url = f"chrome-extension://fiabciakcmgepblmdkmemdbbkilneeeh/park.html?title={encoded_title}&url={encoded_url}&tabId=1572591901&sessionId=1700014174643"
+
+    return sleep_url
+
+
+def killProcesses(all=False):
+    processesToKill = getConfig()["processesToKill"]
+    for process in processesToKill:
+        if all:
+            if process[0] == "#":
+                process = process[1:]
+        print(f"Killing process: {process}")
+        executeCommand(process)
+        if "code" in process.lower() and process[0] != "#":
+            close_all_tabs_in_vscode_workspace(getConfig()["noteVaultPath"])
+    time.sleep(2)
+
+
+def find_workspace_config_dir(workspace_storage, workspace_folder_name):
+    for pattern in ["workspace.json", "meta.json"]:
+        for state_file in glob.glob(
+            f"{workspace_storage}/**/{pattern}", recursive=True
+        ):
+            with open(state_file, "r") as file:
+                state_data = json.load(file)
+                folder_name_key = "folder" if pattern == "workspace.json" else "name"
+                if state_data.get(folder_name_key, "") == workspace_folder_name:
+                    return state_file.replace(pattern, "")
+    return ""
+
+
+def close_all_tabs_in_vscode_workspace(workspace_path):
+    workspace_path = workspace_path.rstrip("/")
+    workspace_storage = os.path.expanduser("~/.config/Code/User/workspaceStorage/")
+    workspace_folder_name = workspace_path.split("/")[-1]
+    config_dir = find_workspace_config_dir(workspace_storage, workspace_folder_name)
+
+    if not config_dir:
+        print(
+            f"No workspace state file found for workspace: {workspace_path}. Could not close tabs."
+        )
+        return
+
+    close_tabs_in_workspace(config_dir)
+    print(f"Closed all tabs in workspace: {workspace_path}")
+
+
+def close_tabs_in_workspace(config_dir):
+    backup_db_path = os.path.join(config_dir, "state.vscdb.bakup")
+    sqlite_db_path = os.path.join(config_dir, "state.vscdb")
+
+    if os.path.exists(backup_db_path):
+        os.remove(backup_db_path)
+
+    try:
+        with sqlite3.connect(sqlite_db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT rowid FROM ItemTable WHERE key='memento/workbench.parts.editor'"
+            )
+            rowid = cursor.fetchone()
+            if rowid:
+                cursor.execute("DELETE FROM ItemTable WHERE rowid=?", (rowid[0],))
+                conn.commit()
+    except sqlite3.Error as e:
+        print(f"Error closing tabs in workspace: {e}")
+
+
+def timeStrToUnix(time_string):
+    if "." not in time_string:
+        time_string = time_string + ".0"
+    hours, minutes_fraction = map(float, time_string.split("."))
+    minutes = int(minutes_fraction * 6)
+
+    today = datetime.date.today()
+
+    time_today = datetime.datetime(
+        today.year, today.month, today.day, int(hours), minutes
+    )
+
+    return int(time.mktime(time_today.timetuple()))
+
+
+def display_dialog(message, display_time):
+    def on_close():
+        pass  ##disable close functionality
+
+    def close_dialog():
+        time.sleep(display_time)
+        dialog_window.destroy()
+        root.quit()
+
+    root = tk.Tk()
+    root.withdraw()
+    dialog_window = tk.Toplevel(root)
+    dialog_window.title("Message")
+    dialog_window.protocol("WM_DELETE_WINDOW", on_close)  # Disable the close button
+    dialog_window.attributes("-topmost", True)
+    dialog_window.geometry(
+        "+{}+{}".format(
+            root.winfo_screenwidth() // 2 - dialog_window.winfo_reqwidth() // 2,
+            root.winfo_screenheight() // 2 - dialog_window.winfo_reqheight() // 2,
+        )
+    )
+
+    tk.Label(dialog_window, text=message, padx=20, pady=20).pack()
+    threading.Thread(target=close_dialog).start()
+    root.mainloop()
