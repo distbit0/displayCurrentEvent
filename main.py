@@ -102,12 +102,13 @@ def getNotePathsToOpen(eventTitle):
 
 def getVsCodeCommandUris(eventName, notePaths):
     commands = []
-    commands.append(['bash://code "' + getConfig()["noteVaultPath"] + '"', ""])
+    vscodeEventPaths = utils.getVsCodePathsForEvent(eventName.lower())
+    if vscodeEventPaths or notePaths:
+        commands.append(['bash://code "' + getConfig()["noteVaultPath"] + '"', ""])
     for path in notePaths:
         commands.append(['bash://code -r "' + path + '"', ""])
-    for path in utils.getVsCodePathsForEvent(eventName.lower()):
+    for path in vscodeEventPaths:
         commands.append(['bash://code "' + path + '"', ""])
-
     return commands
 
 
@@ -203,8 +204,7 @@ def getCurrentEvents():
     return event_durations
 
 
-def process_event(event, duration_seconds, set_event_flag):
-    title = event
+def process_event(title, duration_seconds, set_event_flag):
     is_new_event = False
 
     if utils.read_current_event_title().lower() != title.lower():
@@ -212,7 +212,7 @@ def process_event(event, duration_seconds, set_event_flag):
         if tabs_to_open:
             if should_open_tabs(set_event_flag):
                 openBookmarksForNewEvents(tabs_to_open, set_event_flag)
-                utils.write_current_event_title(title)
+            utils.write_current_event_title(title)
             is_new_event = True
 
     return title, duration_seconds, is_new_event
