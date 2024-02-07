@@ -8,6 +8,7 @@ import argparse
 from dateutil.tz import tzlocal
 import subprocess
 import utils
+import re
 from utils import getAbsPath, getConfig
 
 
@@ -38,7 +39,7 @@ def getTabsToOpen(title):
     notePaths = getNotePathsToOpen(title)
     vsCodeCommandUris = getVsCodeCommandUris(title, notePaths)
     tabsToOpen.extend(vsCodeCommandUris)
-    return tabsToOpen
+    return tabsToOpen, notePaths
 
 
 def replaceEvent(
@@ -52,7 +53,7 @@ def replaceEvent(
     if event_filter == "clear":
         replacement_event = ""
     elif only_open:
-        openBookmarksForNewEvents(getTabsToOpen(event_name), only_open)
+        openBookmarksForNewEvents(getTabsToOpen(event_name)[0], only_open)
         return
     else:
         event_start_time = (
@@ -206,26 +207,53 @@ def getCurrentEvents():
 
 def process_event(title, duration_seconds, set_event_flag):
     is_new_event = False
+    noteFilePaths = []
 
     if utils.read_current_event_title().lower() != title.lower():
-        tabs_to_open = getTabsToOpen(title)
+        tabs_to_open, noteFilePaths = getTabsToOpen(title)
         if tabs_to_open:
             if should_open_tabs(set_event_flag):
                 openBookmarksForNewEvents(tabs_to_open, set_event_flag)
             utils.write_current_event_title(title)
             is_new_event = True
 
-    return title, duration_seconds, is_new_event
+    return title, duration_seconds, is_new_event, noteFilePaths
+
+
+def extract_first_match(pattern, string):
+    match = re.search(pattern, string, re.DOTALL | re.MULTILINE)
+    if match:
+        return match.group(1)
+    return None
 
 
 def should_open_tabs(set_event_flag):
     return getConfig()["autoOpen"] or set_event_flag
 
 
+def getTopNTodosForEvent(noteFilePaths):
+    fileText = ""
+    for notePath in noteFilePaths:
+        if "todo.md" in notePath:
+            with open(notePath) as f:
+                fileText = f.read()
+                break
+    todoString = extract_first_match(r"^\+{5}\n((.|\n)*?)\+{5}$", fileText)
+    todoString = todoString if todoString else ""
+    todoString = todoString.split("\n")[1:]
+    todoString = "   ".join(
+        [todo[:45] if len(todo) > 45 else todo for todo in todoString][:2]
+    )
+    return todoString
+
+
 def format_message(events):
-    messages = [
-        f"{title}{' ' * 15}{round(duration / 3600, 1)}" for title, duration, _ in events
-    ]
+    messages = []
+    for event in events:
+        title, duration, _, noteFilePaths = event
+        duration = round(duration / 3600, 1)
+        topTodosString = getTopNTodosForEvent(noteFilePaths) if noteFilePaths else ""
+        messages.append(f"{title}{' ' * 15}{duration}     {topTodosString}")
     return "  ||  ".join(messages)
 
 
@@ -237,8 +265,7 @@ def main(set_event_flag):
     ]
 
     message_text = format_message(processed_events)
-    new_event_detected = any(is_new for _, _, is_new in processed_events)
-
+    new_event_detected = any(is_new for _, _, is_new, _ in processed_events)
     if new_event_detected:
         utils.display_dialog(message_text, 10)
 
