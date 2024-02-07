@@ -1,1 +1,1 @@
-FRINGE               2.1     1) design [[oracle minimised stablecoin]]   2) check that liquidation bot on fringe zksyn
+FRINGE               1.9     1) design [[oracle minimised stablecoin]]   2) check that liquidation bot on fringe zksyn

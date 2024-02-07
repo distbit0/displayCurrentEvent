@@ -209,8 +209,8 @@ def process_event(title, duration_seconds, set_event_flag):
     is_new_event = False
     noteFilePaths = []
 
+    tabs_to_open, noteFilePaths = getTabsToOpen(title)
     if utils.read_current_event_title().lower() != title.lower():
-        tabs_to_open, noteFilePaths = getTabsToOpen(title)
         if tabs_to_open:
             if should_open_tabs(set_event_flag):
                 openBookmarksForNewEvents(tabs_to_open, set_event_flag)
