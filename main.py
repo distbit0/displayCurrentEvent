@@ -221,9 +221,9 @@ def process_event(title, duration_seconds, set_event_flag):
 
 
 def extract_first_match(pattern, string):
-    match = re.search(pattern, string, re.DOTALL | re.MULTILINE)
+    match = re.findall(pattern, string, re.MULTILINE)
     if match:
-        return match.group(1)
+        return match[0][0]
     return None
 
 
@@ -231,7 +231,7 @@ def should_open_tabs(set_event_flag):
     return getConfig()["autoOpen"] or set_event_flag
 
 
-def getTopNTodosForEvent(noteFilePaths):
+def getTopNTodosForEvent(noteFilePaths, n=2):
     fileText = ""
     for notePath in noteFilePaths:
         if "todo.md" in notePath:
@@ -242,7 +242,7 @@ def getTopNTodosForEvent(noteFilePaths):
     todoString = todoString if todoString else ""
     todoString = todoString.split("\n")[1:]
     todoString = "   ".join(
-        [todo[:45] if len(todo) > 45 else todo for todo in todoString][:2]
+        [todo[:45] if len(todo) > 45 else todo for todo in todoString][:n]
     )
     return todoString
 
