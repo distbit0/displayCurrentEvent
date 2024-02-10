@@ -231,6 +231,16 @@ def should_open_tabs(set_event_flag):
     return getConfig()["autoOpen"] or set_event_flag
 
 
+def remove_links(text):
+    # Remove [[wikilink]]
+    text = re.sub(r"(\[\[)|(\]\])", "", text)
+
+    # Remove [google](https://google.com) using the pattern
+    text = re.sub(r"\[([^]]*)]\([^)]*\)", r"\1", text)
+
+    return text
+
+
 def getTopNTodosForEvent(noteFilePaths, n=2):
     fileText = ""
     for notePath in noteFilePaths:
@@ -238,13 +248,17 @@ def getTopNTodosForEvent(noteFilePaths, n=2):
             with open(notePath) as f:
                 fileText = f.read()
                 break
+
     todoString = extract_first_match(r"^\+{5}\n((.|\n)*?)\+{5}$", fileText)
     todoString = todoString if todoString else ""
     todoString = todoString.split("\n")[1:]
-    todoString = "   ".join(
-        [todo[:45] if len(todo) > 45 else todo for todo in todoString][:n]
-    )
-    return todoString
+    outputText = ""
+    for todo in todoString[:n]:
+        todo = "      " + remove_links(todo)
+        outputText += todo[:45]
+
+    print("todo string: ", outputText)
+    return outputText
 
 
 def format_message(events):
