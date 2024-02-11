@@ -1,1 +1,1 @@
-INCREMENT               1.5           1) increment twam auction mechanism      2) increment auto releveraging
+READ DEFI               2.4     

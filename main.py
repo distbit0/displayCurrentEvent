@@ -86,7 +86,7 @@ def replaceEvent(
 def getNotePathsToOpen(eventTitle):
     notePaths = []
     noteVaultPath = getConfig()["noteVaultPath"]
-    compactEventTitle = "#" + eventTitle.lower().replace(" ", "")
+    compactEventTitle = "$" + eventTitle.lower().replace(" ", "")
 
     # Use the 'find' command to search for files containing the compact event title
     command = f"find {noteVaultPath} -type f -not -path '*/\\.*' -exec grep -l '{compactEventTitle}' {{}} \\;"
@@ -241,7 +241,7 @@ def remove_links(text):
     return text
 
 
-def getTopNTodosForEvent(noteFilePaths, n=2):
+def getTopNTodosForEvent(noteFilePaths, n=3):
     fileText = ""
     for notePath in noteFilePaths:
         if "todo.md" in notePath:
@@ -255,7 +255,7 @@ def getTopNTodosForEvent(noteFilePaths, n=2):
     outputText = ""
     for todo in todoString[:n]:
         todo = "      " + remove_links(todo)
-        outputText += todo[:45]
+        outputText += todo[:30]
 
     print("todo string: ", outputText)
     return outputText
