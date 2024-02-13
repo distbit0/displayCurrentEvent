@@ -266,7 +266,7 @@ def format_message(events):
         title, duration, _, noteFilePaths = event
         duration = round(duration / 3600, 1)
         topTodosString = getTopNTodosForEvent(noteFilePaths) if noteFilePaths else ""
-        messages.append(f"Ctr+Win+e: {title}{' ' * 15}{duration}     {topTodosString}")
+        messages.append(f"ctr+win+e: {title}{' ' * 15}{duration}     {topTodosString}")
     return "  ||  ".join(messages)
 
 
