@@ -207,7 +207,6 @@ def getCurrentEvents():
 
 def process_event(title, duration_seconds, set_event_flag):
     is_new_event = False
-    noteFilePaths = []
 
     tabs_to_open, noteFilePaths = getTabsToOpen(title)
     if utils.read_current_event_title().lower() != title.lower():
@@ -267,7 +266,7 @@ def format_message(events):
         title, duration, _, noteFilePaths = event
         duration = round(duration / 3600, 1)
         topTodosString = getTopNTodosForEvent(noteFilePaths) if noteFilePaths else ""
-        messages.append(f"{title}{' ' * 15}{duration}     {topTodosString}")
+        messages.append(f"Ctr+Win+e: {title}{' ' * 15}{duration}     {topTodosString}")
     return "  ||  ".join(messages)
 
 
