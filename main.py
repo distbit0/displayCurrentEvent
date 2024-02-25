@@ -266,7 +266,7 @@ def format_message(events):
         title, duration, _, noteFilePaths = event
         duration = round(duration / 3600, 1)
         topTodosString = getTopNTodosForEvent(noteFilePaths) if noteFilePaths else ""
-        messages.append(f"ctr+win+e: {title}{' ' * 15}{duration}     {topTodosString}")
+        messages.append(f"{title}{' ' * 15}{duration}     {topTodosString}")
     return "  ||  ".join(messages)
 
 
@@ -283,7 +283,7 @@ def main(set_event_flag):
         utils.display_dialog(message_text, 10)
 
     with open(getAbsPath("displayText.txt"), "w") as file:
-        file.write(message_text)
+        file.write("ctr+win+e: " + message_text)
 
 
 if __name__ == "__main__":

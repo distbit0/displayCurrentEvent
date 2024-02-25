@@ -31,6 +31,7 @@ def get_calendar_service():
 
 def delete_all_events(service, batch_size=1000):
     calendar_id = utils.getConfig()["calendarId"]
+    alreadyDeletedIds = []
 
     def main():
         def getAllEventIds():
@@ -69,6 +70,7 @@ def delete_all_events(service, batch_size=1000):
 
         print(f"Deleting {len(ids)} events in batches")
         i = 0
+        ids = list(set(ids) - set(alreadyDeletedIds))
         while True:
             batch = service.new_batch_http_request()
             startIndex = i * batch_size
@@ -83,6 +85,8 @@ def delete_all_events(service, batch_size=1000):
                         eventId=id,
                     )
                 )
+                print(f"Deleted event: {id}")
+                alreadyDeletedIds.append(id)
 
             try:
                 batch.execute()
@@ -100,6 +104,8 @@ def delete_all_events(service, batch_size=1000):
             ids = main()
             if not ids:
                 return noEventsToDelete
+            else:
+                print("still deleting", "remaining ids:", len(ids), ":", ids)
         except Exception as e:
             print(e)
             time.sleep(20)

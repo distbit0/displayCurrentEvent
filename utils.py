@@ -38,12 +38,21 @@ def downloadIcs(forceDownload=False, backup=False):
     ) or forceDownload
     if should_download:
         ical_string = urllib.request.urlopen(URL).read()
+        if "BEGIN:VEVENT" not in ical_string:
+            print("No events found in calendar")
+            return
         with open(getAbsPath(CACHE_FILE), "wb") as f:
             f.write(ical_string)
 
     if backup:
+        currentTime = str(time.time())
         ics_file_path = (
-            "modified_calendar" + datetime.datetime.now().strftime("%Y%m%d") + ".ics"
+            "modified_calendar"
+            + datetime.datetime.now().strftime("%Y%m%d")
+            + " | "
+            + currentTime
+            + " | "
+            + ".ics"
         )
         with open(getAbsPath(ics_file_path), "wb") as f:
             f.write(ical_string)
