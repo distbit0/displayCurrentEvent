@@ -1,1 +1,1 @@
-ctr+win+e: SLEEP               5.0     
+ctr+win+e: INCREMENT               5.0           1) increment twam and li      2) increment auto releve      3) settlement contract r

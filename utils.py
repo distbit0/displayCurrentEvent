@@ -38,7 +38,7 @@ def downloadIcs(forceDownload=False, backup=False):
     ) or forceDownload
     if should_download:
         ical_string = urllib.request.urlopen(URL).read()
-        if "BEGIN:VEVENT" not in ical_string:
+        if "BEGIN:VEVENT" not in ical_string.decode("utf-8"):
             print("No events found in calendar")
             return
         with open(getAbsPath(CACHE_FILE), "wb") as f:
