@@ -146,40 +146,43 @@ def killProcesses(all=False):
 
 
 def find_workspace_config_dir(workspace_storage, workspace_folder_name):
+    stateFileDirs = []
     for pattern in ["workspace.json", "meta.json"]:
         for state_file in glob.glob(
             f"{workspace_storage}/**/{pattern}", recursive=True
         ):
             with open(state_file, "r") as file:
                 state_data = json.load(file)
-                folder_name_key = "folder" if pattern == "workspace.json" else "name"
-                if state_data.get(folder_name_key, "") == workspace_folder_name:
-                    return state_file.replace(pattern, "")
-    return ""
+                inNotesField = workspace_folder_name in state_data.get("name", "")
+                inFolderField = workspace_folder_name in state_data.get("folder", "")
+                if inNotesField or inFolderField:
+                    print(f"Found workspace config dir: {state_file}", state_data)
+                    stateFileDirs.append(state_file.replace(pattern, ""))
+    return stateFileDirs
 
 
 def close_all_tabs_in_vscode_workspace(workspace_path):
     workspace_path = workspace_path.rstrip("/")
     workspace_storage = os.path.expanduser("~/.config/Code/User/workspaceStorage/")
     workspace_folder_name = workspace_path.split("/")[-1]
-    config_dir = find_workspace_config_dir(workspace_storage, workspace_folder_name)
+    config_dirs = find_workspace_config_dir(workspace_storage, workspace_folder_name)
 
-    if not config_dir:
+    if not config_dirs:
         print(
             f"No workspace state file found for workspace: {workspace_path}. Could not close tabs."
         )
         return
-
-    close_tabs_in_workspace(config_dir)
-    print(f"Closed all tabs in workspace: {workspace_path}")
+    for config_dir in config_dirs:
+        close_tabs_in_workspace(config_dir)
 
 
 def close_tabs_in_workspace(config_dir):
-    backup_db_path = os.path.join(config_dir, "state.vscdb.bakup")
+    backup_db_path = os.path.join(config_dir, "state.vscdb.backup")
     sqlite_db_path = os.path.join(config_dir, "state.vscdb")
 
     if os.path.exists(backup_db_path):
         os.remove(backup_db_path)
+        print(f"Removed backup database: {backup_db_path}")
 
     try:
         with sqlite3.connect(sqlite_db_path) as conn:
@@ -191,6 +194,10 @@ def close_tabs_in_workspace(config_dir):
             if rowid:
                 cursor.execute("DELETE FROM ItemTable WHERE rowid=?", (rowid[0],))
                 conn.commit()
+            else:
+                print(
+                    f"No memento/workbench.parts.editor row found in database: {sqlite_db_path}"
+                )
     except sqlite3.Error as e:
         print(f"Error closing tabs in workspace: {e}")
 
@@ -235,3 +242,7 @@ def display_dialog(message, display_time):
     tk.Label(dialog_window, text=message, padx=20, pady=20).pack()
     threading.Thread(target=close_dialog).start()
     root.mainloop()
+
+
+if __name__ == "__main__":
+    close_all_tabs_in_vscode_workspace(getConfig()["noteVaultPath"])

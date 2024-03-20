@@ -1,0 +1,125 @@
+[667537:667537:0320/185816.119493:ERROR:policy_logger.cc(157)] :components/enterprise/browser/controller/chrome_browser_cloud_management_controller.cc(161) Cloud management controller initialization aborted as CBCM is not enabled. Please use the `--enable-chrome-browser-cloud-management` command line flag to enable it if you are not using the official Google Chrome build.
+Opening in existing browser session.
+Opening in existing browser session.
+Opening in existing browser session.
+Opening in existing browser session.
+[667537:667537:0320/185816.936340:ERROR:object_proxy.cc(576)] Failed to call method: org.freedesktop.ScreenSaver.GetActive: object_path= /org/freedesktop/ScreenSaver: org.freedesktop.DBus.Error.NotSupported: This method is not part of the idle inhibition specification: https://specifications.freedesktop.org/idle-inhibit-spec/latest/
+Opening in existing browser session.
+Opening in existing browser session.
+[667582:667582:0320/185819.190470:ERROR:gl_surface_presentation_helper.cc(260)] GetVSyncParametersIfAvailable() failed for 1 times!
+[667582:667582:0320/185819.769601:ERROR:gl_surface_presentation_helper.cc(260)] GetVSyncParametersIfAvailable() failed for 2 times!
+[667582:667582:0320/185819.773971:ERROR:gl_surface_presentation_helper.cc(260)] GetVSyncParametersIfAvailable() failed for 3 times!
+Killing process: pkill --signal 2 brave
+
+
+
+About to execute command: pkill --signal 2 brave
+
+
+
+Killing process: pkill Telegram
+
+
+
+About to execute command: pkill Telegram
+
+
+
+Killing process: pkill --signal 2 code
+
+
+
+About to execute command: pkill --signal 2 code
+
+
+
+Found workspace config dir: /home/pimania/.config/Code/User/workspaceStorage/45c0011df96db78fb48c8c2920d428fd/workspace.json {'folder': 'file:///home/pimania/notes'}
+Found workspace config dir: /home/pimania/.config/Code/User/workspaceStorage/b5133dee224a2fd92e676dba827ae0dc/meta.json {'id': 'b5133dee224a2fd92e676dba827ae0dc', 'name': 'notes'}
+Removed backup database: /home/pimania/.config/Code/User/workspaceStorage/45c0011df96db78fb48c8c2920d428fd/state.vscdb.backup
+No memento/workbench.parts.editor row found in database: /home/pimania/.config/Code/User/workspaceStorage/b5133dee224a2fd92e676dba827ae0dc/state.vscdb
+
+
+
+About to execute command: brave-browser --profile-directory=Default --app=https://web.whatsapp.com/ &
+
+
+
+
+
+
+About to execute command: brave-browser --new-window "https://app.slack.com/client/T02GBA68K43/C06CQCH1CQ0" &
+
+
+
+
+
+
+About to execute command: brave-browser "https://app.slack.com/client/T02A8UTG7FA/C03D0A943JR" &
+
+
+
+
+
+
+About to execute command: brave-browser "https://app.slack.com/client/T02GBA68K43/C05MEP301D4" &
+
+
+
+
+
+
+About to execute command: brave-browser "https://ap-southeast-2.console.aws.amazon.com/console/home?region=ap-southeast-2#" &
+
+
+
+
+
+
+About to execute command: brave-browser "https://bigarcade.org/" &
+
+
+
+
+
+
+About to execute command: brave-browser "https://docs.google.com/document/d/1gadrH6tXzlJmwcGUInSolYhtdRG5X_mNRJCgfROjCAk/edit" &
+
+
+
+
+
+
+About to execute command: code "/home/pimania/notes" &
+
+
+
+
+
+
+About to execute command: code -r "/home/pimania/notes/zk/paul tmp.md" &
+
+
+
+
+
+
+About to execute command: code -r "/home/pimania/notes/Work/Paul/stoshi distribution.md" &
+
+
+
+
+
+
+About to execute command: code -r "/home/pimania/notes/Work/Paul/Paul todo.md" &
+
+
+
+
+
+
+About to execute command: code -r "/home/pimania/notes/Work/Paul/biga ux issues.md" &
+
+
+
+todo string:        1)  biga email security      2)  biga token distribut      3)  biga token listing e
+[667537:667537:0320/185843.651325:ERROR:interface_endpoint_client.cc(707)] Message 2110515677 rejected by interface blink.mojom.FrameWidgetHost
