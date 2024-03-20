@@ -162,6 +162,9 @@ def find_workspace_config_dir(workspace_storage, workspace_folder_name):
 
 
 def close_all_tabs_in_vscode_workspace(workspace_path):
+    time.sleep(
+        1.5
+    )  # to wait for vsc to close, so that what we write to vscode db is not overwritten by vscode while it is shutting down
     workspace_path = workspace_path.rstrip("/")
     workspace_storage = os.path.expanduser("~/.config/Code/User/workspaceStorage/")
     workspace_folder_name = workspace_path.split("/")[-1]
