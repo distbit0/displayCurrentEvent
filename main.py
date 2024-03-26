@@ -27,6 +27,8 @@ def getTabsToOpen(title):
                 foundFolder.append(True)
                 for child in node["children"]:
                     if "url" in child:
+                        if child["name"] == "SHARE":
+                            continue
                         tabsToOpen.append([child["url"], child["name"]])
             else:
                 # Keep looking
