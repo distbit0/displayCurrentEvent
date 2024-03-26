@@ -17,13 +17,13 @@ def load_event_data():
         with open(getAbsPath("event_data.json"), "r") as file:
             data = json.load(file)
     except (FileNotFoundError, json.JSONDecodeError):
-        data = {"last_open_bookmarks_times": {}, "should_open_tabs_times": []}
+        data = {"last_event_open_time": {}, "event_scheduled_times": {}}
     return data
 
 
 def save_event_data(data):
     with open(getAbsPath("event_data.json"), "w") as file:
-        json.dump(data, file)
+        json.dump(data, file, indent=4, sort_keys=True)
 
 
 def getConfig():

@@ -130,9 +130,9 @@ def openBookmarksForNewEvents(tabsToOpen, setEventArg, event_title):
             elif tabUrl.startswith("http"):
                 handleHttpUrl(tabUrl, tabTitle, httpUrlCount)
                 httpUrlCount += 1
-    if tabsToOpen:
+
         data = load_event_data()
-        data["last_open_bookmarks_times"][event_title] = time.time()
+        data["last_event_open_time"][event_title] = time.time()
         save_event_data(data)
 
     return bool(tabsToOpen)
@@ -234,17 +234,19 @@ def should_open_tabs(set_event_flag, event_title):
     data = load_event_data()
     result = getConfig()["autoOpen"] or set_event_flag
 
-    last_open_time = data["last_open_bookmarks_times"].get(event_title, 0)
-    should_open_times = data["should_open_tabs_times"]
+    last_open_time = data["last_event_open_time"].get(event_title, 0)
+    event_scheduled_times = data["event_scheduled_times"].get(event_title, [])
 
     maxAllowedMissedEvents = getConfig()["maxAllowedMissedEvents"]
+
     if (
-        len(should_open_times) >= maxAllowedMissedEvents
-        and last_open_time < should_open_times[-maxAllowedMissedEvents]
+        len(event_scheduled_times) >= maxAllowedMissedEvents
+        and last_open_time < event_scheduled_times[-maxAllowedMissedEvents]
     ):
         result = True
-
-    data["should_open_tabs_times"].append(time.time())
+    event_scheduled_times.append(time.time())
+    event_scheduled_times = event_scheduled_times[-maxAllowedMissedEvents:]
+    data["event_scheduled_times"][event_title] = event_scheduled_times
     save_event_data(data)
 
     return result
