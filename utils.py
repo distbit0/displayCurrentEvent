@@ -12,6 +12,20 @@ import time
 import datetime
 
 
+def load_event_data():
+    try:
+        with open(getAbsPath("event_data.json"), "r") as file:
+            data = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        data = {"last_open_bookmarks_times": {}, "should_open_tabs_times": []}
+    return data
+
+
+def save_event_data(data):
+    with open(getAbsPath("event_data.json"), "w") as file:
+        json.dump(data, file)
+
+
 def getConfig():
     configFileName = getAbsPath("config.json")
     with open(configFileName) as config:

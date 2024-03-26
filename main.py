@@ -9,7 +9,7 @@ from dateutil.tz import tzlocal
 import subprocess
 import utils
 import re
-from utils import getAbsPath, getConfig
+from utils import getAbsPath, getConfig, load_event_data, save_event_data
 
 
 def getTabsToOpen(title):
@@ -53,7 +53,7 @@ def replaceEvent(
     if event_filter == "clear":
         replacement_event = ""
     elif only_open:
-        openBookmarksForNewEvents(getTabsToOpen(event_name)[0], only_open)
+        openBookmarksForNewEvents(getTabsToOpen(event_name)[0], only_open, event_name)
         return
     else:
         event_start_time = (
@@ -113,7 +113,7 @@ def getVsCodeCommandUris(eventName, notePaths):
     return commands
 
 
-def openBookmarksForNewEvents(tabsToOpen, setEventArg):
+def openBookmarksForNewEvents(tabsToOpen, setEventArg, event_title):
     killCommentedProcesses = bool(setEventArg)
     killUncommentedProcesses = getConfig()["killUncommentedProcesses"]
     shouldKillProcesses = killUncommentedProcesses and killCommentedProcesses
@@ -130,6 +130,10 @@ def openBookmarksForNewEvents(tabsToOpen, setEventArg):
             elif tabUrl.startswith("http"):
                 handleHttpUrl(tabUrl, tabTitle, httpUrlCount)
                 httpUrlCount += 1
+    if tabsToOpen:
+        data = load_event_data()
+        data["last_open_bookmarks_times"][event_title] = time.time()
+        save_event_data(data)
 
     return bool(tabsToOpen)
 
@@ -211,8 +215,8 @@ def process_event(title, duration_seconds, set_event_flag):
     tabs_to_open, noteFilePaths = getTabsToOpen(title)
     if utils.read_current_event_title().lower() != title.lower():
         if tabs_to_open:
-            if should_open_tabs(set_event_flag):
-                openBookmarksForNewEvents(tabs_to_open, set_event_flag)
+            if should_open_tabs(set_event_flag, title):
+                openBookmarksForNewEvents(tabs_to_open, set_event_flag, title)
             utils.write_current_event_title(title)
             is_new_event = True
 
@@ -226,8 +230,20 @@ def extract_first_match(pattern, string):
     return None
 
 
-def should_open_tabs(set_event_flag):
-    return getConfig()["autoOpen"] or set_event_flag
+def should_open_tabs(set_event_flag, event_title):
+    data = load_event_data()
+    result = getConfig()["autoOpen"] or set_event_flag
+
+    last_open_time = data["last_open_bookmarks_times"].get(event_title, 0)
+    should_open_times = data["should_open_tabs_times"]
+
+    if len(should_open_times) >= 2 and last_open_time < should_open_times[-2]:
+        result = True
+
+    data["should_open_tabs_times"].append(time.time())
+    save_event_data(data)
+
+    return result
 
 
 def remove_links(text):
