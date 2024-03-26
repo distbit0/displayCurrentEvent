@@ -232,7 +232,7 @@ def extract_first_match(pattern, string):
 
 def should_open_tabs(set_event_flag, event_title):
     data = load_event_data()
-    result = getConfig()["autoOpen"] or set_event_flag
+    result = bool(set_event_flag)
 
     last_open_time = data["last_event_open_time"].get(event_title, 0)
     event_scheduled_times = data["event_scheduled_times"].get(event_title, [])
