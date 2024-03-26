@@ -1,0 +1,17 @@
+{
+    "newIcsSavePath": "/home/pimania/Documents/",
+    "popupTimeout": 1,
+    "cacheRefreshProbability": 0.05,
+    "bookmarksFolderPath": "/Bookmarks/Open tabs",
+    "bookmarksFilePath": "/home/pimania/.config/BraveSoftware/Brave-Browser/Default/Bookmarks",
+    "processesToKill": [
+        "pkill --signal 2 brave",
+        "pkill Telegram",
+        "pkill --signal 2 code"
+    ],
+    "browserCommand": "brave-browser",
+    "killUncommentedProcesses": true,
+    "noteVaultPath": "/home/pimania/notes",
+    "autoOpen": false,
+    "nTabsToLazyOpen": 10
+}

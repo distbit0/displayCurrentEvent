@@ -7,6 +7,9 @@ from googleapiclient.discovery import build
 from tzlocal import get_localzone
 import time
 import utils
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 # Load Google Calendar API credentials
@@ -30,7 +33,7 @@ def get_calendar_service():
 
 
 def delete_all_events(service, batch_size=1000):
-    calendar_id = utils.getConfig()["calendarId"]
+    calendar_id = os.getenv("calendarId")
     alreadyDeletedIds = []
 
     def main():

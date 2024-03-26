@@ -43,7 +43,7 @@ def getAbsPath(relPath):
 
 def downloadIcs(forceDownload=False, backup=False):
     CACHE_FILE = "calendar_cache.ics"
-    URL = getConfig()["calendarUrl"]
+    URL = os.getenv("calendarUrl")
     # Check if ical file is cached
 
     should_download = (
