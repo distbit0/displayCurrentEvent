@@ -259,7 +259,3 @@ def display_dialog(message, display_time):
     tk.Label(dialog_window, text=message, padx=20, pady=20).pack()
     threading.Thread(target=close_dialog).start()
     root.mainloop()
-
-
-if __name__ == "__main__":
-    close_all_tabs_in_vscode_workspace(getConfig()["noteVaultPath"])
