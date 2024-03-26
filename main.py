@@ -237,7 +237,11 @@ def should_open_tabs(set_event_flag, event_title):
     last_open_time = data["last_open_bookmarks_times"].get(event_title, 0)
     should_open_times = data["should_open_tabs_times"]
 
-    if len(should_open_times) >= 2 and last_open_time < should_open_times[-2]:
+    maxAllowedMissedEvents = getConfig()["maxAllowedMissedEvents"]
+    if (
+        len(should_open_times) >= maxAllowedMissedEvents
+        and last_open_time < should_open_times[-maxAllowedMissedEvents]
+    ):
         result = True
 
     data["should_open_tabs_times"].append(time.time())
