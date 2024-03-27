@@ -238,10 +238,12 @@ def extract_first_match(pattern, string):
 def should_open_tabs(set_event_flag, event_title):
     data = load_event_data()
     shouldOpenTabs = bool(set_event_flag)
-
-    forceOpenOnThreshold = getConfig()["forceOpenOnThreshold"]
-    forceOpenOffThreshold = getConfig()["forceOpenOffThreshold"]
-    forceOpenLookBackCount = getConfig()["forceOpenLookBackCount"]
+    config = getConfig()
+    forceOpenOnThreshold, forceOpenOffThreshold, forceOpenLookBackCount = (
+        config["forceOpenOnThreshold"],
+        config["forceOpenOffThreshold"],
+        config["forceOpenLookBackCount"],
+    )
 
     eventOpenTimes = data["event_opened_times"].get(event_title, [])
     eventScheduleTimes = data["event_scheduled_times"].get(event_title, [])
@@ -270,9 +272,11 @@ def should_open_tabs(set_event_flag, event_title):
 
     eventScheduleTimes.append(time.time())
     eventScheduleTimes = eventScheduleTimes[-forceOpenLookBackCount:]
-    data["event_scheduled_times"][event_title] = eventScheduleTimes
-    data["currentlyForceOpening"][event_title] = openingState
+    eventOpenTimes = eventOpenTimes[-forceOpenLookBackCount:]
 
+    data["event_scheduled_times"][event_title] = eventScheduleTimes
+    data["event_opened_times"][event_title] = eventOpenTimes
+    data["currentlyForceOpening"][event_title] = openingState
     save_event_data(data)
 
     return shouldOpenTabs
