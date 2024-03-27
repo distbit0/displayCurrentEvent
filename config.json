@@ -13,5 +13,7 @@
     "killUncommentedProcesses": true,
     "noteVaultPath": "/home/pimania/notes",
     "nTabsToLazyOpen": 10,
-    "maxAllowedMissedEvents": 1
+    "forceOpenOnThreshold": 0.4,
+    "forceOpenOffThreshold": 0.9,
+    "forceOpenLookBackCount": 10
 }

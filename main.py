@@ -1,4 +1,5 @@
 import icalendar
+import pysnooper
 import recurring_ical_events
 import datetime
 import os
@@ -134,7 +135,9 @@ def openBookmarksForNewEvents(tabsToOpen, setEventArg, event_title):
                 httpUrlCount += 1
 
         data = load_event_data()
-        data["last_event_open_time"][event_title] = time.time()
+        if event_title not in data["event_opened_times"]:
+            data["event_opened_times"][event_title] = []
+        data["event_opened_times"][event_title].append(time.time())
         save_event_data(data)
 
     return bool(tabsToOpen)
@@ -234,24 +237,45 @@ def extract_first_match(pattern, string):
 
 def should_open_tabs(set_event_flag, event_title):
     data = load_event_data()
-    result = bool(set_event_flag)
+    shouldOpenTabs = bool(set_event_flag)
 
-    last_open_time = data["last_event_open_time"].get(event_title, 0)
-    event_scheduled_times = data["event_scheduled_times"].get(event_title, [])
+    forceOpenOnThreshold = getConfig()["forceOpenOnThreshold"]
+    forceOpenOffThreshold = getConfig()["forceOpenOffThreshold"]
+    forceOpenLookBackCount = getConfig()["forceOpenLookBackCount"]
 
-    maxAllowedMissedEvents = getConfig()["maxAllowedMissedEvents"]
+    eventOpenTimes = data["event_opened_times"].get(event_title, [])
+    eventScheduleTimes = data["event_scheduled_times"].get(event_title, [])
+    openingState = data["currentlyForceOpening"].get(event_title, False)
+    forceOpenLookBackCount = min(len(eventScheduleTimes), forceOpenLookBackCount)
+    if len(eventScheduleTimes) > 1:
+        dateOfEarliestSchedule = eventScheduleTimes[-forceOpenLookBackCount]
+        opensSinceEarliestSchedule = [
+            openTime
+            for openTime in eventOpenTimes
+            if openTime + 100 > dateOfEarliestSchedule
+        ]
+        ratioOfOpensToSchedules = (
+            len(opensSinceEarliestSchedule) / forceOpenLookBackCount
+        )
+    else:
+        ratioOfOpensToSchedules = 1
 
-    if (
-        len(event_scheduled_times) >= maxAllowedMissedEvents
-        and last_open_time < event_scheduled_times[-maxAllowedMissedEvents]
-    ):
-        result = True
-    event_scheduled_times.append(time.time())
-    event_scheduled_times = event_scheduled_times[-maxAllowedMissedEvents:]
-    data["event_scheduled_times"][event_title] = event_scheduled_times
+    openingState = (
+        True if ratioOfOpensToSchedules <= forceOpenOnThreshold else openingState
+    )
+    openingState = (
+        False if ratioOfOpensToSchedules >= forceOpenOffThreshold else openingState
+    )
+    shouldOpenTabs = openingState or shouldOpenTabs
+
+    eventScheduleTimes.append(time.time())
+    eventScheduleTimes = eventScheduleTimes[-forceOpenLookBackCount:]
+    data["event_scheduled_times"][event_title] = eventScheduleTimes
+    data["currentlyForceOpening"][event_title] = openingState
+
     save_event_data(data)
 
-    return result
+    return shouldOpenTabs
 
 
 def remove_links(text):

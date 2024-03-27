@@ -17,7 +17,7 @@ def load_event_data():
         with open(getAbsPath("event_data.json"), "r") as file:
             data = json.load(file)
     except (FileNotFoundError, json.JSONDecodeError):
-        data = {"last_event_open_time": {}, "event_scheduled_times": {}}
+        data = {"event_opened_times": {}, "event_scheduled_times": {}}
     return data
 
 
