@@ -257,18 +257,12 @@ def should_open_tabs(set_event_flag, event_title):
             for openTime in eventOpenTimes
             if openTime + 100 > dateOfEarliestSchedule
         ]
-        ratioOfOpensToSchedules = (
-            len(opensSinceEarliestSchedule) / actualQuantityOfSchedules
-        )
+        opensPerSchedule = len(opensSinceEarliestSchedule) / actualQuantityOfSchedules
     else:
-        ratioOfOpensToSchedules = 1
+        opensPerSchedule = 1
 
-    openingState = (
-        True if ratioOfOpensToSchedules <= forceOpenOnThreshold else openingState
-    )
-    openingState = (
-        False if ratioOfOpensToSchedules >= forceOpenOffThreshold else openingState
-    )
+    openingState = True if opensPerSchedule <= forceOpenOnThreshold else openingState
+    openingState = False if opensPerSchedule >= forceOpenOffThreshold else openingState
     shouldOpenTabs = openingState or shouldOpenTabs
 
     eventScheduleTimes.append(time.time())
