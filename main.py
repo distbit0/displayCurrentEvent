@@ -248,7 +248,6 @@ def should_open_tabs(set_event_flag, event_title):
     eventOpenTimes = data["event_opened_times"].get(event_title, [])
     eventScheduleTimes = data["event_scheduled_times"].get(event_title, [])
     openingState = data["currentlyForceOpening"].get(event_title, False)
-    forceOpenLookBackCount = min(len(eventScheduleTimes), forceOpenLookBackCount)
     if len(eventScheduleTimes) > 1:
         dateOfEarliestSchedule = eventScheduleTimes[-forceOpenLookBackCount]
         opensSinceEarliestSchedule = [
@@ -256,8 +255,11 @@ def should_open_tabs(set_event_flag, event_title):
             for openTime in eventOpenTimes
             if openTime + 100 > dateOfEarliestSchedule
         ]
+        adjustedForceOpenLookBackCount = min(
+            len(opensSinceEarliestSchedule), forceOpenLookBackCount
+        )
         ratioOfOpensToSchedules = (
-            len(opensSinceEarliestSchedule) / forceOpenLookBackCount
+            len(opensSinceEarliestSchedule) / adjustedForceOpenLookBackCount
         )
     else:
         ratioOfOpensToSchedules = 1
