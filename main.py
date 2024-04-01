@@ -235,6 +235,7 @@ def extract_first_match(pattern, string):
     return None
 
 
+@pysnooper.snoop()
 def should_open_tabs(set_event_flag, event_title):
     data = load_event_data()
     shouldOpenTabs = bool(set_event_flag)
@@ -249,17 +250,15 @@ def should_open_tabs(set_event_flag, event_title):
     eventScheduleTimes = data["event_scheduled_times"].get(event_title, [])
     openingState = data["currentlyForceOpening"].get(event_title, False)
     if len(eventScheduleTimes) > 1:
-        dateOfEarliestSchedule = eventScheduleTimes[-forceOpenLookBackCount]
+        actualQuantityOfSchedules = min(len(eventScheduleTimes), forceOpenLookBackCount)
+        dateOfEarliestSchedule = eventScheduleTimes[-actualQuantityOfSchedules]
         opensSinceEarliestSchedule = [
             openTime
             for openTime in eventOpenTimes
             if openTime + 100 > dateOfEarliestSchedule
         ]
-        adjustedForceOpenLookBackCount = min(
-            len(opensSinceEarliestSchedule), forceOpenLookBackCount
-        )
         ratioOfOpensToSchedules = (
-            len(opensSinceEarliestSchedule) / adjustedForceOpenLookBackCount
+            len(opensSinceEarliestSchedule) / actualQuantityOfSchedules
         )
     else:
         ratioOfOpensToSchedules = 1

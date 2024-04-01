@@ -10,6 +10,9 @@ import os
 import random
 import time
 import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def load_event_data():
