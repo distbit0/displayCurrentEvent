@@ -266,7 +266,6 @@ def should_open_tabs(set_event_flag, event_title):
         )
 
     shouldOpenTabs = openingState or shouldOpenTabs
-
     eventScheduleTimes.append(time.time())
     eventScheduleTimes = eventScheduleTimes[-forceOpenLookBackCount:]
     eventOpenTimes = eventOpenTimes[-forceOpenLookBackCount:]
