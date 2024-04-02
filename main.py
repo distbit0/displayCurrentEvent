@@ -248,8 +248,8 @@ def should_open_tabs(set_event_flag, event_title):
 
     eventOpenTimes = data["event_opened_times"].get(event_title, [])
     eventScheduleTimes = data["event_scheduled_times"].get(event_title, [])
-    openingState = data["currentlyForceOpening"].get(event_title, False)
-    if len(eventScheduleTimes) > 1:
+    openingState = data["currentlyForceOpening"].get(event_title, True)
+    if len(eventScheduleTimes) >= forceOpenLookBackCount:
         actualQuantityOfSchedules = min(len(eventScheduleTimes), forceOpenLookBackCount)
         dateOfEarliestSchedule = eventScheduleTimes[-actualQuantityOfSchedules]
         opensSinceEarliestSchedule = [
@@ -258,11 +258,13 @@ def should_open_tabs(set_event_flag, event_title):
             if openTime + 100 > dateOfEarliestSchedule
         ]
         opensPerSchedule = len(opensSinceEarliestSchedule) / actualQuantityOfSchedules
-    else:
-        opensPerSchedule = 1
+        openingState = (
+            True if opensPerSchedule <= forceOpenOnThreshold else openingState
+        )
+        openingState = (
+            False if opensPerSchedule >= forceOpenOffThreshold else openingState
+        )
 
-    openingState = True if opensPerSchedule <= forceOpenOnThreshold else openingState
-    openingState = False if opensPerSchedule >= forceOpenOffThreshold else openingState
     shouldOpenTabs = openingState or shouldOpenTabs
 
     eventScheduleTimes.append(time.time())
