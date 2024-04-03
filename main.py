@@ -240,15 +240,14 @@ def should_open_tabs(set_event_flag, event_title):
     data = load_event_data()
     shouldOpenTabs = bool(set_event_flag)
     config = getConfig()
-    forceOpenOnThreshold, forceOpenOffThreshold, forceOpenLookBackCount = (
-        config["forceOpenOnThreshold"],
-        config["forceOpenOffThreshold"],
+    forceOpenThreshold, forceOpenLookBackCount = (
+        config["forceOpenThreshold"],
         config["forceOpenLookBackCount"],
     )
 
     eventOpenTimes = data["event_opened_times"].get(event_title, [])
     eventScheduleTimes = data["event_scheduled_times"].get(event_title, [])
-    openingState = data["currentlyForceOpening"].get(event_title, True)
+    openingState = True
     if len(eventScheduleTimes) >= forceOpenLookBackCount:
         actualQuantityOfSchedules = min(len(eventScheduleTimes), forceOpenLookBackCount)
         dateOfEarliestSchedule = eventScheduleTimes[-actualQuantityOfSchedules]
@@ -258,12 +257,7 @@ def should_open_tabs(set_event_flag, event_title):
             if openTime + 100 > dateOfEarliestSchedule
         ]
         opensPerSchedule = len(opensSinceEarliestSchedule) / actualQuantityOfSchedules
-        openingState = (
-            True if opensPerSchedule <= forceOpenOnThreshold else openingState
-        )
-        openingState = (
-            False if opensPerSchedule >= forceOpenOffThreshold else openingState
-        )
+        openingState = True if opensPerSchedule <= forceOpenThreshold else False
 
     shouldOpenTabs = openingState or shouldOpenTabs
     eventScheduleTimes.append(time.time())
@@ -272,7 +266,6 @@ def should_open_tabs(set_event_flag, event_title):
 
     data["event_scheduled_times"][event_title] = eventScheduleTimes
     data["event_opened_times"][event_title] = eventOpenTimes
-    data["currentlyForceOpening"][event_title] = openingState
     save_event_data(data)
 
     return shouldOpenTabs
