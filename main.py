@@ -121,29 +121,31 @@ def openBookmarksForNewEvents(tabsToOpen, setEventArg, event_title):
     killUncommentedProcesses = getConfig()["killUncommentedProcesses"]
     shouldKillProcesses = killUncommentedProcesses and killCommentedProcesses
 
-    if tabsToOpen:
-        if not setEventArg:
-            utils.display_dialog("About to open", 2, True)
-            time.sleep(15)
-        utils.killProcesses(all=shouldKillProcesses)
-        firstVsCodeUrl = True
-        httpUrlCount = 0
+    if not tabsToOpen:
+        return False
 
-        for tabUrl, tabTitle in tabsToOpen:
-            if tabUrl.startswith("bash://"):
-                handleBashUrl(tabUrl, firstVsCodeUrl)
-                firstVsCodeUrl = False
-            elif tabUrl.startswith("http"):
-                handleHttpUrl(tabUrl, tabTitle, httpUrlCount)
-                httpUrlCount += 1
+    if not setEventArg:
+        utils.display_dialog("About to open", 2, True)
+        time.sleep(1)
+    utils.killProcesses(all=shouldKillProcesses)
+    firstVsCodeUrl = True
+    httpUrlCount = 0
 
-        data = load_event_data()
-        if event_title not in data["event_opened_times"]:
-            data["event_opened_times"][event_title] = []
-        data["event_opened_times"][event_title].append(time.time())
-        save_event_data(data)
+    for tabUrl, tabTitle in tabsToOpen:
+        if tabUrl.startswith("bash://"):
+            handleBashUrl(tabUrl, firstVsCodeUrl)
+            firstVsCodeUrl = False
+        elif tabUrl.startswith("http"):
+            handleHttpUrl(tabUrl, tabTitle, httpUrlCount)
+            httpUrlCount += 1
 
-    return bool(tabsToOpen)
+    data = load_event_data()
+    if event_title not in data["event_opened_times"]:
+        data["event_opened_times"][event_title] = []
+    data["event_opened_times"][event_title].append(time.time())
+    save_event_data(data)
+
+    return True
 
 
 def handleBashUrl(tabUrl, firstVsCodeUrl):
