@@ -237,7 +237,7 @@ def timeStrToUnix(time_string):
     return int(time.mktime(time_today.timetuple()))
 
 
-def display_dialog(message, display_time):
+def display_dialog(message, display_time, closeable=False):
     def on_close():
         pass  ##disable close functionality
 
@@ -250,8 +250,9 @@ def display_dialog(message, display_time):
     root.withdraw()
     dialog_window = tk.Toplevel(root)
     dialog_window.title("Message")
-    dialog_window.protocol("WM_DELETE_WINDOW", on_close)  # Disable the close button
-    dialog_window.attributes("-topmost", True)
+    if not closeable:
+        dialog_window.protocol("WM_DELETE_WINDOW", on_close)  # Disable the close button
+        dialog_window.attributes("-topmost", True)
     dialog_window.geometry(
         "+{}+{}".format(
             root.winfo_screenwidth() // 2 - dialog_window.winfo_reqwidth() // 2,
