@@ -126,7 +126,7 @@ def openBookmarksForNewEvents(tabsToOpen, setEventArg, event_title):
 
     if not setEventArg:
         utils.display_dialog("About to open", 2, True)
-        time.sleep(1)
+        time.sleep(15)
     utils.killProcesses(all=shouldKillProcesses)
     firstVsCodeUrl = True
     httpUrlCount = 0
