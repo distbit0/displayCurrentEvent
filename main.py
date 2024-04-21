@@ -286,7 +286,7 @@ def remove_links(text):
     return text
 
 
-def getTopNTodosForEvent(noteFilePaths, n=3):
+def getTopNTodosForEvent(noteFilePaths, n=1):
     fileText = ""
     for notePath in noteFilePaths:
         if "todo.md" in notePath:
