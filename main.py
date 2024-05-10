@@ -181,6 +181,8 @@ def durationOfLongestActiveEvent():
         if duration > longestDuration:
             longestDuration = duration
 
+    if longestDuration == 0:
+        longestDuration = 3600 * 3
     return longestDuration
 
 
@@ -240,7 +242,6 @@ def extract_first_match(pattern, string):
     return None
 
 
-@pysnooper.snoop()
 def should_open_tabs(set_event_flag, event_title):
     data = load_event_data()
     shouldOpenTabs = bool(set_event_flag)
