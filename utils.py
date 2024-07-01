@@ -180,7 +180,7 @@ def find_workspace_config_dir(workspace_storage, workspace_folder_name):
 
 def close_all_tabs_in_vscode_workspace(workspace_path):
     # to wait for vsc to close, so that what we write to vscode db is not overwritten by vscode while it is shutting down
-    time.sleep(1.5)
+    time.sleep(3)
     workspace_path = workspace_path.rstrip("/")
     workspace_storage = os.path.expanduser("~/.config/Code/User/workspaceStorage/")
     workspace_folder_name = workspace_path.split("/")[-1]
@@ -205,7 +205,7 @@ def close_tabs_in_workspace(config_dir):
 
     try:
         with sqlite3.connect(sqlite_db_path) as conn:
-            keys = ["memento/workbench.parts.editor", "history.entries"]
+            keys = ["memento/workbench.parts.editor"]  # , "history.entries"]
             for key in keys:
                 cursor = conn.cursor()
                 cursor.execute("SELECT rowid FROM ItemTable WHERE key=?", (key,))
