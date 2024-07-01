@@ -205,19 +205,17 @@ def close_tabs_in_workspace(config_dir):
 
     try:
         with sqlite3.connect(sqlite_db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                "SELECT rowid FROM ItemTable WHERE key='memento/workbench.parts.editor'"
-            )
-            rowid = cursor.fetchone()
-            if rowid:
-                cursor.execute("DELETE FROM ItemTable WHERE rowid=?", (rowid[0],))
-                conn.commit()
-                print(f"deleted all tabs in workspace: {config_dir}")
-            else:
-                print(
-                    f"No memento/workbench.parts.editor row found in database: {sqlite_db_path}"
-                )
+            keys = ["memento/workbench.parts.editor", "history.entries"]
+            for key in keys:
+                cursor = conn.cursor()
+                cursor.execute("SELECT rowid FROM ItemTable WHERE key=?", (key,))
+                rowid = cursor.fetchone()
+                if rowid:
+                    cursor.execute("DELETE FROM ItemTable WHERE rowid=?", (rowid[0],))
+                    conn.commit()
+                    print(f"deleted all tabs in workspace: {config_dir}", key)
+                else:
+                    print(f"No {key} row found in database: {sqlite_db_path}")
     except sqlite3.Error as e:
         print(f"Error closing tabs in workspace: {e}")
 
