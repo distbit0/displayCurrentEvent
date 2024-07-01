@@ -179,9 +179,8 @@ def find_workspace_config_dir(workspace_storage, workspace_folder_name):
 
 
 def close_all_tabs_in_vscode_workspace(workspace_path):
-    time.sleep(
-        1.5
-    )  # to wait for vsc to close, so that what we write to vscode db is not overwritten by vscode while it is shutting down
+    # to wait for vsc to close, so that what we write to vscode db is not overwritten by vscode while it is shutting down
+    time.sleep(1.5)
     workspace_path = workspace_path.rstrip("/")
     workspace_storage = os.path.expanduser("~/.config/Code/User/workspaceStorage/")
     workspace_folder_name = workspace_path.split("/")[-1]
@@ -214,6 +213,7 @@ def close_tabs_in_workspace(config_dir):
             if rowid:
                 cursor.execute("DELETE FROM ItemTable WHERE rowid=?", (rowid[0],))
                 conn.commit()
+                print(f"deleted all tabs in workspace: {config_dir}")
             else:
                 print(
                     f"No memento/workbench.parts.editor row found in database: {sqlite_db_path}"
