@@ -5,8 +5,7 @@
     "bookmarksFolderPath": "/Bookmarks/Open tabs",
     "bookmarksFilePath": "/home/pimania/.config/BraveSoftware/Brave-Browser/Default/Bookmarks",
     "processesToKill": [
-        "pkill --signal 2 brave",
-        "pkill Telegram",
+        "wmctrl -c \"Brave\"",
         "pkill --signal 2 code"
     ],
     "browserCommand": "brave-browser",
