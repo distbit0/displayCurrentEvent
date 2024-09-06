@@ -6,11 +6,11 @@
     "bookmarksFilePath": "/home/pimania/.config/BraveSoftware/Brave-Browser/Default/Bookmarks",
     "processesToKill": [
         "wmctrl -c \"Brave\"",
-        "wmctrl -c \"Telegram\"",
-        "wmctrl -c \"Discord\"",
-        "wmctrl -c \"web.whatsapp.com\"",
-        "wmctrl -c \"web.telegram.org\"",
-        "wmctrl -c \"discord.com\"",
+        "#wmctrl -c \"Telegram\"",
+        "#wmctrl -c \"Discord\"",
+        "#wmctrl -c \"web.whatsapp.com\"",
+        "#wmctrl -c \"web.telegram.org\"",
+        "#wmctrl -c \"discord.com\"",
         "pkill --signal 2 code"
     ],
     "browserCommand": "brave-browser",
