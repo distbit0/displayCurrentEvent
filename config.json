@@ -1,7 +1,6 @@
 {
     "newIcsSavePath": "/home/pimania/Documents/",
     "popupTimeout": 1,
-    "cacheRefreshProbability": 0.05,
     "bookmarksFolderPath": "/Bookmarks/Open tabs",
     "bookmarksFilePath": "/home/pimania/.config/BraveSoftware/Brave-Browser/Default/Bookmarks",
     "processesToKill": [
@@ -17,7 +16,5 @@
     "killUncommentedProcesses": true,
     "noteVaultPath": "/home/pimania/notes",
     "nTabsToLazyOpen": 7,
-    "nTabsToOpen": 10,
-    "forceOpenThreshold": -1,
-    "forceOpenLookBackCount": 10
+    "nTabsToOpen": 10
 }
