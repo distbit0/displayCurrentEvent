@@ -165,6 +165,9 @@ def handleHttpUrl(tabUrl, tabTitle, httpUrlCount):
             return [browserCommand, f'"{tabUrl}"']
 
     nTabsToLazyOpen = int(getConfig()["nTabsToLazyOpen"])
+    nTabsToOpen = int(getConfig()["nTabsToOpen"])
+    if httpUrlCount >= nTabsToOpen:
+        return
     if httpUrlCount >= nTabsToLazyOpen:
         tabUrl = utils.generateSleepTabUrl(tabUrl, tabTitle)
     time.sleep(0.14)
