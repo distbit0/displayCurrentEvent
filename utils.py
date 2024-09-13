@@ -2,31 +2,14 @@ import json
 import glob
 import sqlite3
 import tkinter as tk
-import threading
 import urllib.parse
 import urllib.request
 import urllib
 import os
-import random
 import time
-import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
-
-
-def load_event_data():
-    try:
-        with open(getAbsPath("event_data.json"), "r") as file:
-            data = json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError):
-        data = {"event_opened_times": {}, "event_scheduled_times": {}}
-    return data
-
-
-def save_event_data(data):
-    with open(getAbsPath("event_data.json"), "w") as file:
-        json.dump(data, file, indent=4, sort_keys=True)
 
 
 def getConfig():
@@ -42,37 +25,6 @@ def getAbsPath(relPath):
     fullPath = os.path.abspath(os.path.join(basepath, relPath))
 
     return fullPath
-
-
-def downloadIcs(forceDownload=False, backup=False):
-    CACHE_FILE = "calendar_cache.ics"
-    URL = os.getenv("calendarUrl")
-    # Check if ical file is cached
-
-    should_download = (
-        not os.path.exists(getAbsPath(CACHE_FILE))
-        or random.randint(1, 100) < getConfig()["cacheRefreshProbability"] * 100
-    ) or forceDownload
-    if should_download:
-        ical_string = urllib.request.urlopen(URL).read()
-        if "BEGIN:VEVENT" not in ical_string.decode("utf-8"):
-            print("No events found in calendar")
-            return
-        with open(getAbsPath(CACHE_FILE), "wb") as f:
-            f.write(ical_string)
-
-    if backup:
-        currentTime = str(time.time())
-        ics_file_path = (
-            "modified_calendar"
-            + datetime.datetime.now().strftime("%Y%m%d")
-            + " | "
-            + currentTime
-            + " | "
-            + ".ics"
-        )
-        with open(getAbsPath(ics_file_path), "wb") as f:
-            f.write(ical_string)
 
 
 def findEventName(eventNameSubstring):
@@ -120,16 +72,6 @@ def getVsCodePathsForEvent(eventName):
     if eventName not in directoryMap:
         return []
     return directoryMap[eventName]
-
-
-def write_current_event_title(title):
-    with open(getAbsPath("currentEvent.txt"), "w") as file:
-        file.write(title)
-
-
-def read_current_event_title():
-    with open(getAbsPath("currentEvent.txt")) as file:
-        return file.read()
 
 
 def executeCommand(command):
@@ -218,46 +160,3 @@ def close_tabs_in_workspace(config_dir):
                     print(f"No {key} row found in database: {sqlite_db_path}")
     except sqlite3.Error as e:
         print(f"Error closing tabs in workspace: {e}")
-
-
-def timeStrToUnix(time_string):
-    if "." not in time_string:
-        time_string = time_string + ".0"
-    hours, minutes_fraction = map(float, time_string.split("."))
-    minutes = int(minutes_fraction * 6)
-
-    today = datetime.date.today()
-
-    time_today = datetime.datetime(
-        today.year, today.month, today.day, int(hours), minutes
-    )
-
-    return int(time.mktime(time_today.timetuple()))
-
-
-def display_dialog(message, display_time, closeable=False):
-    def on_close():
-        pass  ##disable close functionality
-
-    def close_dialog():
-        time.sleep(display_time)
-        dialog_window.destroy()
-        root.quit()
-
-    root = tk.Tk()
-    root.withdraw()
-    dialog_window = tk.Toplevel(root)
-    dialog_window.title("Message")
-    if not closeable:
-        dialog_window.protocol("WM_DELETE_WINDOW", on_close)  # Disable the close button
-        dialog_window.attributes("-topmost", True)
-    dialog_window.geometry(
-        "+{}+{}".format(
-            root.winfo_screenwidth() // 2 - dialog_window.winfo_reqwidth() // 2,
-            root.winfo_screenheight() // 2 - dialog_window.winfo_reqheight() // 2,
-        )
-    )
-
-    tk.Label(dialog_window, text=message, padx=20, pady=20).pack()
-    threading.Thread(target=close_dialog).start()
-    root.mainloop()
