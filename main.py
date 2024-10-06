@@ -141,5 +141,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.setEvent:
         event_name = utils.findEventName(args.setEvent)
-        openBookmarksForNewEvents(getTabsToOpen(event_name)[0])
-        getNotePathsToOpen(event_name)
+        if event_name:
+            openBookmarksForNewEvents(getTabsToOpen(event_name)[0])
+            getNotePathsToOpen(event_name)
