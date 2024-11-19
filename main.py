@@ -75,7 +75,7 @@ def openBookmarksForNewEvents(tabsToOpen):
     if not tabsToOpen:
         return False
 
-    utils.killProcesses(all=True)
+    # utils.killProcesses(all=True)
     firstVsCodeUrl = True
     httpUrlCount = 0
 
