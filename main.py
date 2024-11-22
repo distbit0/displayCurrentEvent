@@ -1,5 +1,5 @@
 import pysnooper
-import os
+import random
 import json
 import time
 import argparse
@@ -56,6 +56,8 @@ def getNotePathsToOpen(eventTitle):
         if file_path == "":
             continue
         notePaths.append(file_path)
+    
+    random.shuffle(notePaths)
     return notePaths
 
 
